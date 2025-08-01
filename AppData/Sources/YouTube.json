@@ -1,0 +1,17 @@
+{
+  "YouTubeApiKey": "AIzaSyAcjMbvWPrXK66yq4MyCKQ5AlAC7z6eR-0",
+  "EnableYouTubeApi": true,
+  "MaxApiResults": 50,
+  "PreferredAudioFormat": 0,
+  "ExtractAudioOnly": true,
+  "UseYoutubeDLp": true,
+  "YoutubeDLpPath": "",
+  "SearchType": 0,
+  "IncludePlaylists": true,
+  "MaxPlaylistItems": 100,
+  "UserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+  "RequestTimeoutSeconds": 30,
+  "RetryCount": 3,
+  "EnableDebugLogging": false,
+  "IsEnabled": true
+}

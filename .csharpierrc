@@ -1,0 +1,38 @@
+{
+    "printWidth": 120,
+    "tabWidth": 4,
+    "useTabs": false,
+    "endOfLine": "lf",
+    "insertFinalNewline": true,
+    "trimTrailingWhitespace": true,
+    "include": [
+        "**/*.cs"
+    ],
+    "exclude": [
+        "**/bin/**",
+        "**/obj/**",
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/packages/**",
+        "**/*.generated.cs",
+        "**/Designer.cs",
+        "**/*.Designer.cs"
+    ],
+    "ignore": [
+        "**/*.cs"
+    ],
+    "preprocessorSymbolSets": [],
+    "respectIgnore": false,
+    "respectEditorConfig": false,
+    "respectGitignore": false,
+    "respectExcludeFiles": false,
+    "respectIncludeFiles": false,
+    "respectPreprocessorSymbols": false,
+    "respectEndOfLine": false,
+    "respectIndentSize": false,
+    "respectIndentStyle": false,
+    "respectInsertFinalNewline": false,
+    "respectMaxLineLength": false,
+    "respectTrimTrailingWhitespace": false,
+    "respectCharset": false
+}

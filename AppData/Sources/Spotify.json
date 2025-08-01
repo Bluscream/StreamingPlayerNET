@@ -1,0 +1,14 @@
+{
+  "ClientId": "",
+  "ClientSecret": "",
+  "RedirectUri": "http://localhost:8888/callback",
+  "SearchType": 0,
+  "IncludeAlbums": true,
+  "IncludePlaylists": true,
+  "MaxSearchResults": 50,
+  "PreferredQuality": 320,
+  "EnableCrossfade": false,
+  "RequestTimeoutSeconds": 30,
+  "EnableDebugLogging": true,
+  "IsEnabled": false
+}

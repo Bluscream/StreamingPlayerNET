@@ -1,0 +1,83 @@
+{
+  "largeFileThresholdMB": 10,
+  "partialDownloadSizeMB": 10,
+  "downloadTimeoutSeconds": 30,
+  "maxConcurrentDownloads": 3,
+  "defaultVolume": 50,
+  "audioBufferSizeKB": 1024,
+  "preferredAudioQuality": 256,
+  "defaultRepeatMode": 0,
+  "defaultShuffleEnabled": false,
+  "maxSearchResults": 50,
+  "searchTimeoutSeconds": 15,
+  "windowWidth": 1000,
+  "windowHeight": 592,
+  "splitterDistance": 250,
+  "showPlaylistsPanel": true,
+  "showSearchPanel": true,
+  "darkMode": true,
+  "statusStringFormat": "{song} by {artist}",
+  "showRemainingTime": true,
+  "playPauseHotkey": {
+    "enabled": true,
+    "combo": "Space"
+  },
+  "stopHotkey": {
+    "enabled": true,
+    "combo": "Escape"
+  },
+  "nextTrackHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BRight"
+  },
+  "previousTrackHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BLeft"
+  },
+  "repeatModeHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BR"
+  },
+  "shuffleHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BS"
+  },
+  "volumeUpHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BUp"
+  },
+  "volumeDownHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BDown"
+  },
+  "togglePlaylistsHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BP"
+  },
+  "toggleSearchHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BS"
+  },
+  "settingsHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002B,"
+  },
+  "helpHotkey": {
+    "enabled": true,
+    "combo": "F1"
+  },
+  "darkModeHotkey": {
+    "enabled": true,
+    "combo": "Ctrl\u002BT"
+  },
+  "logLevel": 2,
+  "maxLogFiles": 10,
+  "maxLogFileSizeMB": 10,
+  "enableDebugMode": true,
+  "enableGlobalHotkeysFallback": true,
+  "cacheDirectory": "C:\\Users\\Bluscream\\AppData\\Local\\StreamingPlayerNET\\Cache",
+  "tempDirectory": "C:\\Users\\Bluscream\\AppData\\Local\\Temp\\",
+  "userAgent": "StreamingPlayerNET/1.0.0",
+  "enableQueueCaching": true,
+  "maxCachedQueueSize": 100
+}

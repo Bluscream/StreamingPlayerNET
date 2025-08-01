@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StreamingPlayerNET.Common\StreamingPlayerNET.Common.csproj" />
+    <ProjectReference Include="..\StreamingPlayerNET.Source.Base\StreamingPlayerNET.Source.Base.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NLog" Version="5.2.8" />
+    <PackageReference Include="SpotifyAPI.Web" Version="7.2.1" />
+  </ItemGroup>
+
+</Project> 

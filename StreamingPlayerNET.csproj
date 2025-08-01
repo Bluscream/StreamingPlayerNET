@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <NoWarn>$(NoWarn);CS8602;CS8600;CS8601;CS8605;CS1998;CS0067</NoWarn>
-    <Version>1.0.0.4</Version>
+    <Version>1.0.0.5</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../StreamingPlayerNET.Common/StreamingPlayerNET.Common.csproj" />

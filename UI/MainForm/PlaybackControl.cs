@@ -106,6 +106,8 @@ public partial class MainForm
         
         // Reset progress for new song
         seekBar.Value = 0;
+        elapsedTimeLabel.Text = "00:00";
+        remainingTimeLabel.Text = "00:00";
         
         // Set seek bar to normal colors for new song
         seekBar.BackColor = SystemColors.Control;
@@ -189,6 +191,8 @@ public partial class MainForm
         Logger.Info($"[Completed-{completedId}] Repeat mode: {_queue.RepeatMode}");
         
         seekBar.Value = 0;
+        elapsedTimeLabel.Text = "00:00";
+        remainingTimeLabel.Text = "00:00";
         timingLabel.Text = "00:00 / 00:00";
         HideDownloadProgress();
         

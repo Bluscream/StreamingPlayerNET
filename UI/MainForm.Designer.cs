@@ -70,7 +70,6 @@ partial class MainForm
     private ColumnHeader playlistSourceColumn;
 
     private Panel searchControlsPanel;
-    private Panel queueControlsPanel;
 
 
     private ListBox playlistsListBox;
@@ -85,6 +84,8 @@ partial class MainForm
     private Button shuffleButton;
     private Label currentSongLabel;
     private ProgressBar seekBar;
+    private Label elapsedTimeLabel;
+    private Label remainingTimeLabel;
 
     private StatusStrip statusStrip;
     private ToolStripStatusLabel statusLabel;
@@ -137,8 +138,6 @@ partial class MainForm
         searchDurationColumn = new ColumnHeader();
         searchSourceColumn = new ColumnHeader();
 
-        queueControlsPanel = new Panel();
-
 
         queueListView = new ListView();
         queueTitleColumn = new ColumnHeader();
@@ -162,6 +161,8 @@ partial class MainForm
         volumeTrackBar = new TrackBar();
         currentSongLabel = new Label();
         seekBar = new ProgressBar();
+        elapsedTimeLabel = new Label();
+        remainingTimeLabel = new Label();
 
         statusStrip = new StatusStrip();
         statusLabel = new ToolStripStatusLabel();
@@ -175,7 +176,6 @@ partial class MainForm
         playlistTabPage.SuspendLayout();
 
         searchControlsPanel.SuspendLayout();
-        queueControlsPanel.SuspendLayout();
 
         playerPanel.SuspendLayout();
         playbackControlsPanel.SuspendLayout();
@@ -371,14 +371,14 @@ partial class MainForm
         // queueTabPage
         // 
         queueTabPage.Controls.Add(queueListView);
-        queueTabPage.Controls.Add(queueControlsPanel);
-        queueTabPage.Location = new Point(4, 24);
+        // queueTabPage.Location = new Point(4, 24);
         queueTabPage.Name = "queueTabPage";
         queueTabPage.Padding = new Padding(3);
-        queueTabPage.Size = new Size(992, 422);
+        // queueTabPage.Size = new Size(992, 422);
         queueTabPage.TabIndex = 1;
         queueTabPage.Text = "📋 Queue";
         queueTabPage.UseVisualStyleBackColor = true;
+        queueTabPage.Dock = DockStyle.Fill;
         // 
         // playlistTabPage
         // 
@@ -456,15 +456,6 @@ partial class MainForm
         // 
         searchSourceColumn.Text = "Source";
         searchSourceColumn.Width = 100;
-        // 
-        // queueControlsPanel
-        // 
-        queueControlsPanel.Dock = DockStyle.Top;
-        queueControlsPanel.Location = new Point(3, 3);
-        queueControlsPanel.Name = "queueControlsPanel";
-        queueControlsPanel.Size = new Size(986, 60);
-        queueControlsPanel.TabIndex = 0;
-        // 
 
         // 
         // queueListView
@@ -475,7 +466,7 @@ partial class MainForm
         queueListView.GridLines = true;
         queueListView.MultiSelect = true;
         queueListView.Name = "queueListView";
-        queueListView.Size = new Size(986, 359);
+        // queueListView.Size = new Size(986, 359);
         queueListView.TabIndex = 1;
         queueListView.UseCompatibleStateImageBehavior = false;
         queueListView.View = View.Details;
@@ -555,6 +546,8 @@ partial class MainForm
         playerPanel.Controls.Add(playbackControlsPanel);
         playerPanel.Controls.Add(currentSongLabel);
         playerPanel.Controls.Add(seekBar);
+        playerPanel.Controls.Add(elapsedTimeLabel);
+        playerPanel.Controls.Add(remainingTimeLabel);
         playerPanel.Dock = DockStyle.Bottom;
         playerPanel.Location = new Point(0, 450);
         playerPanel.Name = "playerPanel";
@@ -660,16 +653,39 @@ partial class MainForm
         // seekBar
         // 
         seekBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        seekBar.Location = new Point(10, 35);
+        seekBar.Location = new Point(60, 35);
         seekBar.Name = "seekBar";
-        seekBar.Size = new Size(980, 23);
+        seekBar.Size = new Size(880, 23);
         seekBar.TabIndex = 1;
+        // 
+        // elapsedTimeLabel
+        // 
+        elapsedTimeLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        elapsedTimeLabel.AutoSize = true;
+        elapsedTimeLabel.Location = new Point(10, 38);
+        elapsedTimeLabel.Name = "elapsedTimeLabel";
+        elapsedTimeLabel.Size = new Size(44, 15);
+        elapsedTimeLabel.TabIndex = 2;
+        elapsedTimeLabel.Text = "00:00";
+        elapsedTimeLabel.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // remainingTimeLabel
+        // 
+        remainingTimeLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        remainingTimeLabel.AutoSize = true;
+        remainingTimeLabel.Cursor = Cursors.Hand;
+        remainingTimeLabel.Location = new Point(946, 38);
+        remainingTimeLabel.Name = "remainingTimeLabel";
+        remainingTimeLabel.Size = new Size(44, 15);
+        remainingTimeLabel.TabIndex = 3;
+        remainingTimeLabel.Text = "00:00";
+        remainingTimeLabel.TextAlign = ContentAlignment.MiddleRight;
         // 
 
         // 
         // statusStrip
         // 
-        statusStrip.Items.AddRange(new ToolStripItem[] { statusLabel, downloadProgressBar, timingLabel });
+        statusStrip.Items.AddRange(new ToolStripItem[] { downloadProgressBar, statusLabel, timingLabel });
         statusStrip.Dock = DockStyle.Bottom;
         statusStrip.Name = "statusStrip";
         statusStrip.Size = new Size(1000, 22);
@@ -734,7 +750,6 @@ partial class MainForm
 
         searchControlsPanel.ResumeLayout(false);
         searchControlsPanel.PerformLayout();
-        queueControlsPanel.ResumeLayout(false);
 
         playerPanel.ResumeLayout(false);
         playerPanel.PerformLayout();

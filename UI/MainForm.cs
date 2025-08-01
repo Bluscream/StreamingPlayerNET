@@ -64,14 +64,8 @@ public partial class MainForm : Form
 
     protected override void WndProc(ref Message m)
     {
-        // Let the Windows Media Service handle media commands first
+        // Let the Windows Media Service handle media commands
         if (_windowsMediaService?.ProcessMediaCommand(m) == true)
-        {
-            return; // Message was handled
-        }
-        
-        // Let the Global Hotkeys service handle media keys as fallback
-        if (_globalHotkeys?.ProcessHotkeyMessage(m) == true)
         {
             return; // Message was handled
         }

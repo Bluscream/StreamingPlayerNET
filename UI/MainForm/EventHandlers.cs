@@ -56,6 +56,9 @@ public partial class MainForm
         // Seekbar click event
         seekBar.MouseClick += SeekBar_MouseClick;
         
+        // Time label click events
+        remainingTimeLabel.Click += OnRemainingTimeLabelClick;
+        
         // Menu events
         SetupMenuEventHandlers();
         
@@ -99,6 +102,20 @@ public partial class MainForm
                     var progress = (int)((position.TotalSeconds / duration.Value.TotalSeconds) * 100);
                     seekBar.Value = Math.Min(progress, 100);
                     
+                    // Update time labels
+                    elapsedTimeLabel.Text = $"{position:mm\\:ss}";
+                    
+                    // Update remaining time label based on configuration
+                    var config = ConfigurationService.Current;
+                    if (config.ShowRemainingTime)
+                    {
+                        remainingTimeLabel.Text = $"{duration.Value - position:mm\\:ss}";
+                    }
+                    else
+                    {
+                        remainingTimeLabel.Text = $"{duration.Value:mm\\:ss}";
+                    }
+                    
                     // Update status strip timing
                     timingLabel.Text = $"{position:mm\\:ss} / {duration.Value:mm\\:ss}";
                 }
@@ -106,6 +123,8 @@ public partial class MainForm
             else
             {
                 seekBar.Value = 0;
+                elapsedTimeLabel.Text = "00:00";
+                remainingTimeLabel.Text = "00:00";
                 timingLabel.Text = "00:00 / 00:00";
             }
         }
@@ -139,6 +158,46 @@ public partial class MainForm
         catch (Exception ex)
         {
             Logger.Debug(ex, "Error during seek operation");
+        }
+    }
+
+    private void OnRemainingTimeLabelClick(object? sender, EventArgs e)
+    {
+        try
+        {
+            var config = ConfigurationService.Current;
+            
+            // Toggle the setting
+            config.ShowRemainingTime = !config.ShowRemainingTime;
+            
+            // Save the configuration
+            ConfigurationService.SaveConfiguration();
+            
+            // Update the display immediately if a song is playing
+            var currentSong = _musicPlayerService?.GetCurrentSong();
+            if (currentSong != null && (_musicPlayerService?.IsPlaying ?? false))
+            {
+                var position = _musicPlayerService?.GetCurrentPosition() ?? TimeSpan.Zero;
+                var duration = _musicPlayerService?.GetTotalDuration();
+                
+                if (duration.HasValue && duration.Value.TotalSeconds > 0)
+                {
+                    if (config.ShowRemainingTime)
+                    {
+                        remainingTimeLabel.Text = $"{duration.Value - position:mm\\:ss}";
+                    }
+                    else
+                    {
+                        remainingTimeLabel.Text = $"{duration.Value:mm\\:ss}";
+                    }
+                }
+            }
+            
+            Logger.Debug($"Time display mode toggled to: {(config.ShowRemainingTime ? "Remaining" : "Total")}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "Error toggling time display mode");
         }
     }
 
@@ -356,7 +415,7 @@ public partial class MainForm
         if (_darkModeMenuItem != null)
         {
             var config = ConfigurationService.Current;
-            _darkModeMenuItem.Text = config.DarkMode ? "Switch to &Light Mode" : "Switch to &Dark Mode";
+            _darkModeMenuItem.Text = config.DarkMode ? "&Light Mode" : "&Dark Mode";
         }
     }
 

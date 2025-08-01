@@ -71,6 +71,28 @@ public partial class MainForm
                 Logger.Warn(ex, "Failed to initialize Windows Media Service - system media controls will not be available");
             }
             
+            // Initialize Global Hotkeys as fallback for media keys
+            if (ConfigurationService.Current.EnableGlobalHotkeysFallback)
+            {
+                try
+                {
+                    _globalHotkeys = new GlobalHotkeys(_musicPlayerService, _configService, this.Handle);
+                    
+                    // Wire up media command handling for global hotkeys
+                    _globalHotkeys.MediaCommandReceived += OnMediaCommandReceived;
+                    
+                    Logger.Info("Global Hotkeys initialized as media keys fallback");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "Failed to initialize Global Hotkeys - media keys fallback will not be available");
+                }
+            }
+            else
+            {
+                Logger.Info("Global Hotkeys fallback disabled in configuration");
+            }
+            
             // Wire up music player events
             _musicPlayerService.SongChanged += OnSongChanged;
             _musicPlayerService.PlaybackStateChanged += OnPlaybackStateChanged;

@@ -24,6 +24,7 @@ public partial class MainForm : Form
 
     private ToastNotificationService? _toastNotificationService;
     private WindowsMediaService? _windowsMediaService;
+    private GlobalHotkeys? _globalHotkeys;
     
     private List<Song> _searchResults = new();
     private List<Playlist> _playlists = new();
@@ -63,8 +64,14 @@ public partial class MainForm : Form
 
     protected override void WndProc(ref Message m)
     {
-        // Let the Windows Media Service handle media commands
+        // Let the Windows Media Service handle media commands first
         if (_windowsMediaService?.ProcessMediaCommand(m) == true)
+        {
+            return; // Message was handled
+        }
+        
+        // Let the Global Hotkeys service handle media keys as fallback
+        if (_globalHotkeys?.ProcessHotkeyMessage(m) == true)
         {
             return; // Message was handled
         }

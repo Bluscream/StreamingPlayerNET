@@ -98,6 +98,9 @@ public partial class MainForm
         // Dispose Windows Media Service
         _windowsMediaService?.Dispose();
         
+        // Dispose Global Hotkeys service
+        _globalHotkeys?.Dispose();
+        
         // Dispose toast notification service
         _toastNotificationService?.Dispose();
         

@@ -1,0 +1,20 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = false
+indent_style = space
+indent_size = 4
+
+[*.cs]
+# Suppress platform-specific warnings for Windows Forms applications
+# CA1416: This call site is reachable on all platforms
+dotnet_diagnostic.CA1416.severity = none
+
+# Other useful settings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Nullable reference types
+nullable = enable

@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../StreamingPlayerNET.Common/StreamingPlayerNET.Common.csproj" />
+    <ProjectReference Include="../StreamingPlayerNET.Source.Base/StreamingPlayerNET.Source.Base.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NLog" Version="6.0.2" />
+    <PackageReference Include="Humanizer.Core" Version="2.14.1" />
+    <PackageReference Include="YoutubeDLSharp" Version="1.1.2" />
+    <PackageReference Include="YoutubeExplode" Version="6.5.4" />
+  </ItemGroup>
+
+</Project>

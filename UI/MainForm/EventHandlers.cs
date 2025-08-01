@@ -109,7 +109,7 @@ public partial class MainForm
                     var config = ConfigurationService.Current;
                     if (config.ShowRemainingTime)
                     {
-                        remainingTimeLabel.Text = $"{duration.Value - position:mm\\:ss}";
+                        remainingTimeLabel.Text = $"-{duration.Value - position:mm\\:ss}";
                     }
                     else
                     {

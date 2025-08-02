@@ -50,6 +50,11 @@ public partial class MainForm
         
         contextMenu.Items.Add(new ToolStripSeparator());
         
+        // Open File menu item
+        var openFileMenuItem = new ToolStripMenuItem("Open File");
+        openFileMenuItem.Click += (s, e) => OnContextMenuOpenFile();
+        contextMenu.Items.Add(openFileMenuItem);
+        
         // Show in Explorer menu item
         var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
         showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
@@ -107,6 +112,11 @@ public partial class MainForm
         
         contextMenu.Items.Add(new ToolStripSeparator());
         
+        // Open File menu item
+        var openFileMenuItem = new ToolStripMenuItem("Open File");
+        openFileMenuItem.Click += (s, e) => OnContextMenuOpenFile();
+        contextMenu.Items.Add(openFileMenuItem);
+        
         // Show in Explorer menu item
         var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
         showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
@@ -153,6 +163,11 @@ public partial class MainForm
         contextMenu.Items.Add(viewOnYouTubeMenuItem);
         
         contextMenu.Items.Add(new ToolStripSeparator());
+        
+        // Open File menu item
+        var openFileMenuItem = new ToolStripMenuItem("Open File");
+        openFileMenuItem.Click += (s, e) => OnContextMenuOpenFile();
+        contextMenu.Items.Add(openFileMenuItem);
         
         // Show in Explorer menu item
         var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
@@ -419,6 +434,68 @@ public partial class MainForm
                     Logger.Error(ex, "Failed to show file in Explorer");
                     MessageBox.Show(
                         $"Failed to show file in Explorer: {ex.Message}",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    );
+                }
+            }
+        }
+    }
+    
+    private void OnContextMenuOpenFile()
+    {
+        var activeListView = GetActiveListView();
+        if (activeListView?.SelectedItems.Count == 1)
+        {
+            var selectedItem = activeListView.SelectedItems[0];
+            if (selectedItem.Tag is Song song && song.SelectedStream != null)
+            {
+                try
+                {
+                    // Get the caching service from the playback service
+                    var cachingService = _playbackService?.GetCachingService();
+                    if (cachingService != null)
+                    {
+                        var filePath = cachingService.GetCachedFilePath(song, song.SelectedStream);
+                        if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+                        {
+                            // Open the file with the default application
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = filePath,
+                                UseShellExecute = true
+                            });
+                            Logger.Info($"Opened file with default application: {filePath}");
+                        }
+                        else
+                        {
+                            Logger.Warn($"File not found in cache for song: {song.Title}");
+                            // Show a message to the user that the file is not cached
+                            MessageBox.Show(
+                                "This song is not currently cached locally. Play the song first to cache it.",
+                                "File Not Cached",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information
+                            );
+                        }
+                    }
+                    else
+                    {
+                        Logger.Warn("Caching service not available");
+                        MessageBox.Show(
+                            "Caching service is not available.",
+                            "Service Unavailable",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Failed to open file");
+                    MessageBox.Show(
+                        $"Failed to open file: {ex.Message}",
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error

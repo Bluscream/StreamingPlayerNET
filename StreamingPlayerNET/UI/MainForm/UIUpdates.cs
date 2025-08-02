@@ -167,6 +167,7 @@ public partial class MainForm
                     case "Add Selected to Queue":
                         menuItem.Enabled = hasSelection;
                         break;
+                    case "Open File":
                     case "Show in Explorer":
                         menuItem.Enabled = hasSingleSelection && IsFileCached(listView);
                         break;

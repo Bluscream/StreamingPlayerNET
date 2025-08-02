@@ -3,6 +3,7 @@ using YouTubeMusicAPI.Models.Search;
 using YouTubeMusicAPI.Models.Info;
 using StreamingPlayerNET.Common.Models;
 using StreamingPlayerNET.Source.Base.Interfaces;
+using StreamingPlayerNET.Source.YouTubeMusic.Utils;
 using NLog;
 
 namespace StreamingPlayerNET.Source.YouTubeMusic.Services;
@@ -174,8 +175,8 @@ public class YouTubeMusicSearchService : ISearchService
         {
             Id = songResult.Id,
             Title = songResult.Name,
-            Artist = string.Join(", ", songResult.Artists.Select(a => a.Name)),
-            ChannelTitle = songResult.Artists.FirstOrDefault()?.Name ?? "Unknown",
+            Artist = YouTubeMusicUtils.JoinAndCleanArtistNames(songResult.Artists.Select(a => a.Name)),
+            ChannelTitle = YouTubeMusicUtils.CleanArtistName(songResult.Artists.FirstOrDefault()?.Name ?? "Unknown"),
             Album = "Unknown Album", // Album info not available in search results
             PlaylistName = "YouTube Music Search",
             Url = $"https://music.youtube.com/watch?v={songResult.Id}",
@@ -195,8 +196,8 @@ public class YouTubeMusicSearchService : ISearchService
         {
             Id = videoResult.Id,
             Title = videoResult.Name,
-            Artist = string.Join(", ", videoResult.Artists.Select(a => a.Name)),
-            ChannelTitle = videoResult.Artists.FirstOrDefault()?.Name ?? "Unknown",
+            Artist = YouTubeMusicUtils.JoinAndCleanArtistNames(videoResult.Artists.Select(a => a.Name)),
+            ChannelTitle = YouTubeMusicUtils.CleanArtistName(videoResult.Artists.FirstOrDefault()?.Name ?? "Unknown"),
             Album = "Unknown Album", // Album info not available in video search results
             PlaylistName = "YouTube Music Videos",
             Url = $"https://music.youtube.com/watch?v={videoResult.Id}",
@@ -216,8 +217,8 @@ public class YouTubeMusicSearchService : ISearchService
         {
             Id = artistSong.Id,
             Title = artistSong.Name,
-            Artist = string.Join(", ", artistSong.Artists.Select(a => a.Name)),
-            ChannelTitle = artistSong.Artists.FirstOrDefault()?.Name ?? "Unknown",
+            Artist = YouTubeMusicUtils.JoinAndCleanArtistNames(artistSong.Artists.Select(a => a.Name)),
+            ChannelTitle = YouTubeMusicUtils.CleanArtistName(artistSong.Artists.FirstOrDefault()?.Name ?? "Unknown"),
             Album = "Unknown Album", // Album info not available in artist songs
             PlaylistName = "Artist Songs",
             Url = $"https://music.youtube.com/watch?v={artistSong.Id}",
@@ -237,8 +238,8 @@ public class YouTubeMusicSearchService : ISearchService
         {
             Id = playlistSong.Id,
             Title = playlistSong.Name,
-            Artist = string.Join(", ", playlistSong.Artists.Select(a => a.Name)),
-            ChannelTitle = playlistSong.Artists.FirstOrDefault()?.Name ?? "Unknown",
+            Artist = YouTubeMusicUtils.JoinAndCleanArtistNames(playlistSong.Artists.Select(a => a.Name)),
+            ChannelTitle = YouTubeMusicUtils.CleanArtistName(playlistSong.Artists.FirstOrDefault()?.Name ?? "Unknown"),
             Album = "Unknown Album", // Album info not available in playlist songs
             PlaylistName = "Community Playlist",
             Url = $"https://music.youtube.com/watch?v={playlistSong.Id}",

@@ -1,4 +1,5 @@
 using StreamingPlayerNET.Common.Models;
+using StreamingPlayerNET.Common.Utils;
 using StreamingPlayerNET.Source.Base.Interfaces;
 using NLog;
 using System.Security.Cryptography;
@@ -81,7 +82,7 @@ public class CachingService
         
         lock (_cacheLock)
         {
-            if (_fileCache.TryGetValue(cacheKey, out var cachedPath) && File.Exists(cachedPath))
+            if (_fileCache.TryGetValue(cacheKey, out var cachedPath) && File.Exists(cachedPath) && IsValidAudioFile(cachedPath))
             {
                 Logger.Debug($"Cache hit for song: {song.Title}");
                 return cachedPath;
@@ -90,7 +91,7 @@ public class CachingService
         
         // Fallback: search for the file on disk
         var fallbackPath = FindCachedFileOnDisk(song, streamInfo);
-        if (fallbackPath != null)
+        if (fallbackPath != null && IsValidAudioFile(fallbackPath))
         {
             Logger.Debug($"Found cached file on disk for song: {song.Title}");
             // Add to in-memory cache for future lookups
@@ -713,7 +714,9 @@ public class CachingService
             var c when c.Contains("vorbis") => "ogg",
             var c when c.Contains("mp3") => "mp3",
             var c when c.Contains("flac") => "flac",
-            _ => "m4a" // Default to m4a
+            var c when c.Contains("webm") => "webm",
+            var c when c.Contains("wav") => "wav",
+            _ => "m4a" // Default to m4a for better compatibility
         };
     }
     
@@ -722,12 +725,50 @@ public class CachingService
         return extension.ToLowerInvariant() switch
         {
             "m4a" => "mp4a",
+            "aac" => "aac",
             "opus" => "opus",
             "ogg" => "vorbis",
             "mp3" => "mp3",
             "flac" => "flac",
             "webm" => "opus", // webm files typically contain opus audio
+            "wav" => "pcm",
             _ => "mp4a" // Default to mp4a
         };
+    }
+    
+    /// <summary>
+    /// Validates that a file is a supported audio format and has content
+    /// </summary>
+    /// <param name="filePath">Path to the audio file</param>
+    /// <returns>True if the file is a valid supported audio file</returns>
+    private bool IsValidAudioFile(string filePath)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+                return false;
+                
+            var fileInfo = new FileInfo(filePath);
+            if (fileInfo.Length == 0)
+            {
+                Logger.Debug($"Audio file is empty: {filePath}");
+                return false;
+            }
+            
+            var extension = AudioFormatUtils.GetFileExtension(filePath);
+            if (!AudioFormatUtils.IsSupportedFormat(extension))
+            {
+                Logger.Debug($"Unsupported audio format: {extension} for file: {filePath}");
+                return false;
+            }
+            
+            Logger.Debug($"Valid audio file: {filePath} ({extension}, {fileInfo.Length} bytes)");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, $"Error validating audio file: {filePath}");
+            return false;
+        }
     }
 } 

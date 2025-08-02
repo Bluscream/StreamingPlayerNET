@@ -24,6 +24,8 @@ partial class MainForm
 
     private MenuStrip menuStrip;
     private ToolStripMenuItem fileMenu;
+    private ToolStripMenuItem openFileMenuItem;
+    private ToolStripSeparator fileSeparator1;
     private ToolStripMenuItem reloadPlaylistsMenuItem;
     private ToolStripMenuItem exitMenuItem;
     private ToolStripMenuItem playbackMenu;
@@ -231,10 +233,24 @@ partial class MainForm
         // 
         // fileMenu
         // 
-        fileMenu.DropDownItems.AddRange(new ToolStripItem[] { reloadPlaylistsMenuItem, exitMenuItem });
+        fileMenu.DropDownItems.AddRange(new ToolStripItem[] { openFileMenuItem, fileSeparator1, reloadPlaylistsMenuItem, exitMenuItem });
         fileMenu.Name = "fileMenu";
         fileMenu.Size = new Size(37, 20);
         fileMenu.Text = "&File";
+        // 
+        // openFileMenuItem
+        // 
+        openFileMenuItem = new ToolStripMenuItem();
+        openFileMenuItem.Name = "openFileMenuItem";
+        openFileMenuItem.ShortcutKeys = Keys.Control | Keys.O;
+        openFileMenuItem.Size = new Size(174, 22);
+        openFileMenuItem.Text = "&Open File...";
+        // 
+        // fileSeparator1
+        // 
+        fileSeparator1 = new ToolStripSeparator();
+        fileSeparator1.Name = "fileSeparator1";
+        fileSeparator1.Size = new Size(171, 6);
         // 
         // reloadPlaylistsMenuItem
         // 

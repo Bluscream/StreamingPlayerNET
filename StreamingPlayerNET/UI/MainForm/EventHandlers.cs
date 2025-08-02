@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using StreamingPlayerNET.Common.Models;
+using StreamingPlayerNET.Common.Utils;
 using StreamingPlayerNET.Services;
 using NLog;
 using static StreamingPlayerNET.Common.Models.PlaybackState;
@@ -382,6 +383,7 @@ public partial class MainForm
     private void SetupMenuEventHandlers()
     {
         // File menu
+        openFileMenuItem.Click += async (s, e) => await OpenLocalAudioFile();
         reloadPlaylistsMenuItem.Click += async (s, e) => await ReloadPlaylists();
         exitMenuItem.Click += (s, e) => Close();
         
@@ -544,6 +546,75 @@ public partial class MainForm
                 downloadProgressBar.Value = 0;
                 statusLabel.Text = "0.0%";
             }
+        }
+    }
+    
+    private async Task OpenLocalAudioFile()
+    {
+        try
+        {
+            using var openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Open Audio File";
+            openFileDialog.Filter = "Audio Files|*.mp3;*.m4a;*.wav;*.flac;*.aac;*.ogg;*.opus;*.webm|All Files|*.*";
+            openFileDialog.FilterIndex = 1;
+            openFileDialog.Multiselect = false;
+            
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                var filePath = openFileDialog.FileName;
+                Logger.Info($"Opening local audio file: {filePath}");
+                
+                // Validate the file format
+                if (!AudioFormatUtils.IsSupportedAudioFile(filePath))
+                {
+                    var extension = AudioFormatUtils.GetFileExtension(filePath);
+                    MessageBox.Show(
+                        $"Unsupported audio format: {extension}\n\nSupported formats: {string.Join(", ", AudioFormatUtils.SupportedExtensions)}",
+                        "Unsupported Format",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
+                    return;
+                }
+                
+                // Create a temporary song object for the local file
+                var localSong = new Song
+                {
+                    Id = $"local_{Path.GetFileNameWithoutExtension(filePath)}",
+                    Title = Path.GetFileNameWithoutExtension(filePath),
+                    Artist = "Local File",
+                    Album = "Local Files",
+                    Source = "Local",
+                    Duration = null, // Will be determined during playback
+                    SelectedStream = new AudioStreamInfo
+                    {
+                        Url = filePath,
+                        FormatId = "local",
+                        AudioCodec = AudioFormatUtils.GetCodecFromExtension(AudioFormatUtils.GetFileExtension(filePath)),
+                        Extension = AudioFormatUtils.GetFileExtension(filePath),
+                        Container = AudioFormatUtils.GetFileExtension(filePath)
+                    }
+                };
+                
+                // Add to queue and play
+                _queue.AddSong(localSong);
+                await _musicPlayerService?.PlaySongAsync(localSong);
+                
+                // Switch to queue tab to show the added song
+                mainTabControl.SelectedTab = queueTabPage;
+                
+                Logger.Info($"Successfully added local file to queue: {filePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "Failed to open local audio file");
+            MessageBox.Show(
+                $"Failed to open audio file: {ex.Message}",
+                "Error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
         }
     }
 }

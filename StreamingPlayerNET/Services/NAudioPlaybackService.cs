@@ -1,5 +1,7 @@
 using NAudio.Wave;
+using NAudio.Lame;
 using StreamingPlayerNET.Common.Models;
+using StreamingPlayerNET.Common.Utils;
 using StreamingPlayerNET.Source.Base.Interfaces;
 using NLog;
 using System.Diagnostics;
@@ -250,7 +252,16 @@ public class NAudioPlaybackService : IPlaybackService
             
             Logger.Debug($"Audio file size: {fileInfo.Length} bytes");
             
-            _audioProvider = new AudioFileReader(filePath);
+            // Check if the file format is supported
+            if (!AudioFormatUtils.IsSupportedAudioFile(filePath))
+            {
+                var extension = AudioFormatUtils.GetFileExtension(filePath);
+                Logger.Warn($"Unsupported audio format: {extension}");
+                throw new NotSupportedException($"Audio format not supported: {extension}");
+            }
+            
+            // Create appropriate audio provider based on file format
+            _audioProvider = CreateAudioProvider(filePath);
             _audioOutput = new WaveOutEvent();
             _audioOutput.Init(_audioProvider);
             
@@ -324,6 +335,51 @@ public class NAudioPlaybackService : IPlaybackService
             stopwatch.Stop();
             Logger.Error(ex, $"Failed to play audio stream after {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
             throw;
+        }
+    }
+    
+    private IWaveProvider CreateAudioProvider(string filePath)
+    {
+        var extension = AudioFormatUtils.GetFileExtension(filePath);
+        Logger.Debug($"Creating audio provider for format: {extension}");
+        
+        try
+        {
+            // Try to use AudioFileReader first (works for most formats including m4a)
+            var audioFileReader = new AudioFileReader(filePath);
+            Logger.Debug($"Successfully created AudioFileReader for {extension}");
+            return audioFileReader;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, $"AudioFileReader failed for {extension}, trying alternative methods");
+            
+            // For specific formats, we might need alternative approaches
+            // This is a fallback for formats that AudioFileReader doesn't handle well
+            switch (extension)
+            {
+                case ".m4a":
+                case ".aac":
+                    // Try to use MediaFoundationReader for m4a/aac files
+                    try
+                    {
+                        var mediaFoundationReader = new MediaFoundationReader(filePath);
+                        Logger.Debug($"Successfully created MediaFoundationReader for {extension}");
+                        return mediaFoundationReader;
+                    }
+                    catch (Exception mfEx)
+                    {
+                        Logger.Error(mfEx, $"MediaFoundationReader also failed for {extension}");
+                        throw new NotSupportedException($"Unable to play {extension} file: {filePath}", ex);
+                    }
+                    
+                case ".mp3":
+                    // MP3 files should work with AudioFileReader, but if they don't, we'll throw the original exception
+                    throw new NotSupportedException($"Unable to play {extension} file: {filePath}", ex);
+                    
+                default:
+                    throw new NotSupportedException($"Audio format not supported: {extension}", ex);
+            }
         }
     }
     

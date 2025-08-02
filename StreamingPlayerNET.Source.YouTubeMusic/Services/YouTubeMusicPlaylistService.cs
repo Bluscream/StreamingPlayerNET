@@ -4,6 +4,7 @@ using YouTubeMusicAPI.Models.Library;
 using StreamingPlayerNET.Common.Models;
 using StreamingPlayerNET.Source.Base.Interfaces;
 using StreamingPlayerNET.Source.YouTubeMusic;
+using StreamingPlayerNET.Source.YouTubeMusic.Utils;
 using NLog;
 using System.Text.Json;
 
@@ -595,8 +596,8 @@ public class YouTubeMusicPlaylistService : IPlaylistService
                         {
                             Id = librarySong.Id,
                             Title = librarySong.Name,
-                            Artist = string.Join(", ", librarySong.Artists.Select(artist => artist.Name)),
-                            ChannelTitle = librarySong.Artists.FirstOrDefault()?.Name ?? "Unknown",
+                            Artist = YouTubeMusicUtils.JoinAndCleanArtistNames(librarySong.Artists.Select(artist => artist.Name)),
+                            ChannelTitle = YouTubeMusicUtils.CleanArtistName(librarySong.Artists.FirstOrDefault()?.Name ?? "Unknown"),
                             Album = librarySong.Album?.Name ?? "Unknown Album",
                             PlaylistName = "Saved Songs",
                             Url = $"https://music.youtube.com/watch?v={librarySong.Id}",
@@ -711,10 +712,10 @@ public class YouTubeMusicPlaylistService : IPlaylistService
                         artistsList.Add(artistObj.Name.ToString());
                     }
                 }
-                artist = string.Join(", ", artistsList);
+                artist = YouTubeMusicUtils.JoinAndCleanArtistNames(artistsList);
                 if (artistsList.Count > 0)
                 {
-                    channelTitle = artistsList[0];
+                    channelTitle = YouTubeMusicUtils.CleanArtistName(artistsList[0]);
                 }
             }
             

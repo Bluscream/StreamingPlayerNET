@@ -3,6 +3,7 @@ using YouTubeMusicAPI.Models.Info;
 using YouTubeMusicAPI.Models.Streaming;
 using StreamingPlayerNET.Common.Models;
 using StreamingPlayerNET.Source.Base.Interfaces;
+using StreamingPlayerNET.Source.YouTubeMusic.Utils;
 using NLog;
 
 namespace StreamingPlayerNET.Source.YouTubeMusic.Services;
@@ -38,8 +39,8 @@ public class YouTubeMusicMetadataService : IMetadataService
             {
                 Id = songId,
                 Title = songInfo.Name,
-                Artist = string.Join(", ", songInfo.Artists.Select(a => a.Name)),
-                ChannelTitle = songInfo.Artists.FirstOrDefault()?.Name ?? "Unknown",
+                Artist = YouTubeMusicUtils.JoinAndCleanArtistNames(songInfo.Artists.Select(a => a.Name)),
+                ChannelTitle = YouTubeMusicUtils.CleanArtistName(songInfo.Artists.FirstOrDefault()?.Name ?? "Unknown"),
                 Album = "Unknown Album", // Album info not available in song video info
                 PlaylistName = "YouTube Music",
                 Url = $"https://music.youtube.com/watch?v={songId}",

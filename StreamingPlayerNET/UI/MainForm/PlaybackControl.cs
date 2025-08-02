@@ -252,7 +252,7 @@ public partial class MainForm
             if (repeatSong != null)
             {
                 Logger.Info($"[Completed-{completedId}] REPEATING current song: {repeatSong.Title}");
-                Task.Run(async () => await PlaySong(repeatSong));
+                _ = Task.Run(async () => await PlaySong(repeatSong));
                 return;
             }
         }
@@ -265,7 +265,7 @@ public partial class MainForm
             if (nextSong != null)
             {
                 Logger.Info($"[Completed-{completedId}] Next song: {nextSong.Title}");
-                Task.Run(async () => await PlaySong(nextSong));
+                _ = Task.Run(async () => await PlaySong(nextSong));
                 return;
             }
         }

@@ -42,6 +42,11 @@ public partial class MainForm
             }
         }
         
+        // Download menu item (available for all context menu types)
+        var downloadMenuItem = new ToolStripMenuItem("Download");
+        downloadMenuItem.Click += (s, e) => Task.Run(async () => await OnContextMenuDownload());
+        contextMenu.Items.Add(downloadMenuItem);
+        
         contextMenu.Items.Add(new ToolStripSeparator());
         
         // Queue management items (only for queue)
@@ -187,6 +192,74 @@ public partial class MainForm
             {
                 _queue.AddSongs(selectedSongs);
                 Logger.Info($"Added {selectedSongs.Count} songs to queue");
+            }
+        }
+    }
+
+    private async Task OnContextMenuDownload()
+    {
+        var activeListView = GetActiveListView();
+        if (activeListView?.SelectedItems.Count == 1)
+        {
+            var selectedItem = activeListView.SelectedItems[0];
+            if (selectedItem.Tag is Song song)
+            {
+                try
+                {
+                    Logger.Info($"Starting download for song: {song.Title}");
+                    
+                    // Get metadata and audio stream if not already available
+                    if (string.IsNullOrEmpty(song.Title) || song.SelectedStream == null)
+                    {
+                        Logger.Info("Getting metadata and audio stream for download");
+                        var metadata = await _metadataService.GetSongMetadataAsync(song.Id);
+                        
+                        // Update song with metadata
+                        song.Title = metadata.Title;
+                        song.Artist = metadata.Artist;
+                        song.Duration = metadata.Duration;
+                        song.ThumbnailUrl = metadata.ThumbnailUrl;
+                        song.Description = metadata.Description;
+                        song.UploadDate = metadata.UploadDate;
+                        song.ViewCount = metadata.ViewCount;
+                        song.LikeCount = metadata.LikeCount;
+                        
+                        // Get best audio stream
+                        song.SelectedStream = await _metadataService.GetBestAudioStreamAsync(song.Id);
+                    }
+                    
+                    if (song.SelectedStream != null)
+                    {
+                        // Download the audio file
+                        var filePath = await _downloadService.DownloadAudioAsync(song.SelectedStream, song.Title);
+                        
+                        Logger.Info($"Successfully downloaded song to: {filePath}");
+                        
+                        // Show success message
+                        SafeInvoke(() => MessageBox.Show(
+                            $"Successfully downloaded '{song.Title}' to:\n{filePath}",
+                            "Download Complete",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information
+                        ));
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("No audio stream available for download");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, $"Failed to download song: {song.Title}");
+                    
+                    // Show error message
+                    SafeInvoke(() => MessageBox.Show(
+                        $"Failed to download '{song.Title}':\n{ex.Message}",
+                        "Download Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    ));
+                }
             }
         }
     }

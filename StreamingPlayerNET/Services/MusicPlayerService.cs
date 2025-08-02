@@ -25,6 +25,7 @@ public class MusicPlayerService
     public Song? CurrentSong { get => _currentSong; private set => _currentSong = value; }
     public Playlist? CurrentPlaylist { get => _currentPlaylist; private set => _currentPlaylist = value; }
     public float CurrentVolume { get => _currentVolume; private set => _currentVolume = value; }
+    public int CurrentPlaylistIndex { get => _currentPlaylistIndex; private set => _currentPlaylistIndex = value; }
     
     public event EventHandler<Song>? SongChanged;
     public event EventHandler<PlaybackState>? PlaybackStateChanged;
@@ -192,7 +193,7 @@ public class MusicPlayerService
         Logger.Info($"Playing playlist: {playlist.Name} (starting at index {startIndex})");
         
         CurrentPlaylist = playlist;
-        _currentPlaylistIndex = startIndex - 1; // Will be incremented in PlayNextSongAsync
+        CurrentPlaylistIndex = startIndex - 1; // Will be incremented in PlayNextSongAsync
         
         await PlayNextSongAsync(cancellationToken);
     }
@@ -205,16 +206,16 @@ public class MusicPlayerService
             return;
         }
         
-        _currentPlaylistIndex++;
+        CurrentPlaylistIndex++;
         
-        if (_currentPlaylistIndex >= CurrentPlaylist.Songs.Count)
+        if (CurrentPlaylistIndex >= CurrentPlaylist.Songs.Count)
         {
             Logger.Info("Reached end of playlist");
-            _currentPlaylistIndex = 0; // Loop back to beginning
+            CurrentPlaylistIndex = 0; // Loop back to beginning
         }
         
-        var song = CurrentPlaylist.Songs[_currentPlaylistIndex];
-        Logger.Info($"Playing next song in playlist: {song.Title} (index {_currentPlaylistIndex + 1}/{CurrentPlaylist.Songs.Count})");
+        var song = CurrentPlaylist.Songs[CurrentPlaylistIndex];
+        Logger.Info($"Playing next song in playlist: {song.Title} (index {CurrentPlaylistIndex + 1}/{CurrentPlaylist.Songs.Count})");
         
         await PlaySongAsync(song, cancellationToken);
     }
@@ -227,15 +228,15 @@ public class MusicPlayerService
             return;
         }
         
-        _currentPlaylistIndex--;
+        CurrentPlaylistIndex--;
         
-        if (_currentPlaylistIndex < 0)
+        if (CurrentPlaylistIndex < 0)
         {
-            _currentPlaylistIndex = CurrentPlaylist.Songs.Count - 1; // Loop to end
+            CurrentPlaylistIndex = CurrentPlaylist.Songs.Count - 1; // Loop to end
         }
         
-        var song = CurrentPlaylist.Songs[_currentPlaylistIndex];
-        Logger.Info($"Playing previous song in playlist: {song.Title} (index {_currentPlaylistIndex + 1}/{CurrentPlaylist.Songs.Count})");
+        var song = CurrentPlaylist.Songs[CurrentPlaylistIndex];
+        Logger.Info($"Playing previous song in playlist: {song.Title} (index {CurrentPlaylistIndex + 1}/{CurrentPlaylist.Songs.Count})");
         
         await PlaySongAsync(song, cancellationToken);
     }
@@ -329,7 +330,6 @@ public class MusicPlayerService
     }
     
     // Getters for current state
-    public int GetCurrentPlaylistIndex() => _currentPlaylistIndex;
     public PlaybackState GetPlaybackState() => _playbackService.GetPlaybackState();
     public TimeSpan GetCurrentPosition() => _playbackService.GetCurrentPosition();
     public TimeSpan? GetTotalDuration() => _playbackService.GetTotalDuration();

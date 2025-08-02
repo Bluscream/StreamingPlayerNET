@@ -29,6 +29,21 @@ public partial class SettingsForm : Form
         
         InitializeComponent();
         
+        // Set the form icon
+        try
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            using var stream = assembly.GetManifestResourceStream("StreamingPlayerNET.logo.ico");
+            if (stream != null)
+            {
+                Icon = new Icon(stream);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "Failed to load application icon");
+        }
+        
         _toolTip = new ToolTip
         {
             AutoPopDelay = 5000,

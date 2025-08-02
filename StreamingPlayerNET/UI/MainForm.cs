@@ -45,6 +45,21 @@ public partial class MainForm : Form
         InitializeComponent();
         Logger.Debug("Form components initialized successfully");
         
+        // Set the form icon
+        try
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            using var stream = assembly.GetManifestResourceStream("StreamingPlayerNET.logo.ico");
+            if (stream != null)
+            {
+                Icon = new Icon(stream);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "Failed to load application icon");
+        }
+        
         // Apply configuration to UI
         ApplyConfiguration();
         

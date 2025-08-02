@@ -52,14 +52,35 @@ public class ToastNotificationService : IDisposable
                 Logger.Info($"[Toast-{callId}] SHOWING notification for: {title} - {artist}");
 
                 // Create toast notification using the modern toolkit
-                new ToastContentBuilder()
+                var builder = new ToastContentBuilder()
                     .AddText("Now Playing", AdaptiveTextStyle.Header)
                     .AddText(title, AdaptiveTextStyle.Title)
                     .AddText(!string.IsNullOrEmpty(album) ? $"{artist} • {album}" : artist, AdaptiveTextStyle.Subtitle)
                     .SetToastScenario(ToastScenario.Default)
                     .SetToastDuration(ToastDuration.Short)
-                    .AddAudio(null, silent: true) // Silent notification
-                    .Show(); // Show the toast
+                    .AddAudio(null, silent: true); // Silent notification
+                
+                // Add app logo if available
+                try
+                {
+                    var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                    using var stream = assembly.GetManifestResourceStream("StreamingPlayerNET.logo.png");
+                    if (stream != null)
+                    {
+                        var tempPath = Path.GetTempFileName() + ".png";
+                        using (var fileStream = File.Create(tempPath))
+                        {
+                            stream.CopyTo(fileStream);
+                        }
+                        builder.AddAppLogoOverride(new Uri(tempPath), ToastGenericAppLogoCrop.Circle);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Debug(ex, "Failed to add app logo to notification");
+                }
+                
+                builder.Show(); // Show the toast
                 
                 // Update the last notified song
                 _lastNotifiedSong = song;

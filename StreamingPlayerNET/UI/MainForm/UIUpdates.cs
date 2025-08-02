@@ -91,7 +91,7 @@ public partial class MainForm
         try
         {
             var playlist = _musicPlayerService?.CurrentPlaylist;
-            var playlistIndex = _musicPlayerService?.GetCurrentPlaylistIndex() ?? 0;
+            var playlistIndex = _musicPlayerService?.CurrentPlaylistIndex ?? 0;
             var position = _musicPlayerService?.GetCurrentPosition() ?? TimeSpan.Zero;
             var duration = _musicPlayerService?.GetTotalDuration();
             

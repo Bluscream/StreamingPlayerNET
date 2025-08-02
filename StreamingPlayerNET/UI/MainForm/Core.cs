@@ -234,13 +234,8 @@ public partial class MainForm
 
     private void OnQueueCurrentIndexChanged(object? sender, int currentIndex)
     {
-        var indexId = Guid.NewGuid().ToString("N")[..8];
-        Logger.Debug($"[QueueIndex-{indexId}] *** QUEUE CURRENT INDEX CHANGED to {currentIndex}, Thread: {Thread.CurrentThread.ManagedThreadId}");
-        
         // Save queue when current index changes
         SaveCachedQueue();
-        
-        Logger.Debug($"[QueueIndex-{indexId}] Queue index change handling completed");
     }
 
 
@@ -267,27 +262,27 @@ public partial class MainForm
             {
                 case MediaCommand.Play:
                 case MediaCommand.Pause:
-                    this.Invoke(OnPlayPauseButtonClick);
+                    this.BeginInvoke(OnPlayPauseButtonClick);
                     break;
                     
                 case MediaCommand.Stop:
-                    this.Invoke(() => _musicPlayerService?.Stop());
+                    this.BeginInvoke(() => _musicPlayerService?.Stop());
                     break;
                     
                 case MediaCommand.Next:
-                    this.Invoke(async () => await PlayNextSong());
+                    this.BeginInvoke(async () => await PlayNextSong());
                     break;
                     
                 case MediaCommand.Previous:
-                    this.Invoke(async () => await PlayPreviousSong());
+                    this.BeginInvoke(async () => await PlayPreviousSong());
                     break;
                     
                 case MediaCommand.VolumeUp:
-                    this.Invoke(() => AdjustVolume(10));
+                    this.BeginInvoke(() => AdjustVolume(10));
                     break;
                     
                 case MediaCommand.VolumeDown:
-                    this.Invoke(() => AdjustVolume(-10));
+                    this.BeginInvoke(() => AdjustVolume(-10));
                     break;
                     
                 default:

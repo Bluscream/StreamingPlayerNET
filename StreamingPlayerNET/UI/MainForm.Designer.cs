@@ -512,6 +512,8 @@ partial class MainForm
         queueListView.TabIndex = 1;
         queueListView.UseCompatibleStateImageBehavior = false;
         queueListView.View = View.Details;
+        queueListView.MultiSelect = true;
+        queueListView.AllowDrop = true;
         // 
         // queueTitleColumn
         // 

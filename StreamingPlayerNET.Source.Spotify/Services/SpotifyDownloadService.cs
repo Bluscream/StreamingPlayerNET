@@ -19,14 +19,19 @@ public class SpotifyDownloadService : IDownloadService
         _ytdlpPath = ytdlpPath;
     }
 
-    public async Task<string> DownloadAudioAsync(Song song, AudioStreamInfo streamInfo, CancellationToken cancellationToken = default)
+    public async Task<string> DownloadAudioAsync(Song song, CancellationToken cancellationToken = default)
     {
         Logger.Info($"Downloading Spotify audio for song: {song.Title}");
+        
+        if (song.SelectedStream == null)
+        {
+            throw new InvalidOperationException($"No selected stream for song: {song.Title}");
+        }
         
         try
         {
             var tempFile = Path.GetTempFileName();
-            var outputFile = Path.ChangeExtension(tempFile, streamInfo.Extension);
+            var outputFile = Path.ChangeExtension(tempFile, song.SelectedStream.Extension);
             
             // Report download start
             DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, "Starting download..."));
@@ -34,7 +39,7 @@ public class SpotifyDownloadService : IDownloadService
             var startInfo = new ProcessStartInfo
             {
                 FileName = _ytdlpPath,
-                Arguments = $"--extract-audio --audio-format {streamInfo.Extension} --audio-quality 0 --output \"{outputFile}\" \"{streamInfo.Url}\"",
+                Arguments = $"--extract-audio --audio-format {song.SelectedStream.Extension} --audio-quality 0 --output \"{outputFile}\" \"{song.SelectedStream.Url}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -107,8 +112,8 @@ public class SpotifyDownloadService : IDownloadService
             
             // For Spotify, we need to download the file first, then return a stream
             // Create a temporary song object for the download
-            var tempSong = new Song { Title = "Spotify Track" };
-            var downloadedPath = await DownloadAudioAsync(tempSong, streamInfo, cancellationToken: cancellationToken);
+            var tempSong = new Song { Title = "Spotify Track", SelectedStream = streamInfo };
+            var downloadedPath = await DownloadAudioAsync(tempSong, cancellationToken: cancellationToken);
             
             if (!string.IsNullOrEmpty(downloadedPath) && File.Exists(downloadedPath))
             {

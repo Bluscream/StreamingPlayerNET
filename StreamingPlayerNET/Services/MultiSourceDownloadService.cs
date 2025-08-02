@@ -16,7 +16,7 @@ public class MultiSourceDownloadService : IDownloadService
         _sourceManager = sourceManager ?? throw new ArgumentNullException(nameof(sourceManager));
     }
     
-    public async Task<string> DownloadAudioAsync(Song song, AudioStreamInfo streamInfo, CancellationToken cancellationToken = default)
+    public async Task<string> DownloadAudioAsync(Song song, CancellationToken cancellationToken = default)
     {
         Logger.Info($"Downloading audio for song: {song.Title}");
         
@@ -37,7 +37,7 @@ public class MultiSourceDownloadService : IDownloadService
                 
                 try
                 {
-                    var filePath = await provider.DownloadService.DownloadAudioAsync(song, streamInfo, cancellationToken);
+                    var filePath = await provider.DownloadService.DownloadAudioAsync(song, cancellationToken);
                     Logger.Info($"Successfully downloaded from {provider.Name}");
                     return filePath;
                 }

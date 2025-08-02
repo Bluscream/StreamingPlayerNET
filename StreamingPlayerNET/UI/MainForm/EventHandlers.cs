@@ -45,6 +45,11 @@ public partial class MainForm
         
         // Queue tab events
         queueListView.DoubleClick += (s, e) => Task.Run(async () => await OnQueueItemDoubleClick());
+        queueListView.ItemDrag += OnQueueItemDrag;
+        queueListView.DragEnter += OnQueueDragEnter;
+        queueListView.DragOver += OnQueueDragOver;
+        queueListView.DragDrop += OnQueueDragDrop;
+        queueListView.KeyDown += OnQueueKeyDown;
         SetupSongContextMenu(SongContextMenuType.Queue);
         
         // Playlist tab events
@@ -257,6 +262,139 @@ public partial class MainForm
         {
             Logger.Warn($"[QueueClick-{clickId}] No items selected in queue");
         }
+    }
+
+    private void OnQueueItemDrag(object? sender, ItemDragEventArgs e)
+    {
+        if (queueListView.SelectedItems.Count > 0)
+        {
+            // Create a list of selected songs
+            var selectedSongs = new List<Song>();
+            foreach (ListViewItem item in queueListView.SelectedItems)
+            {
+                if (item.Tag is Song song)
+                {
+                    selectedSongs.Add(song);
+                }
+            }
+            
+            if (selectedSongs.Count > 0)
+            {
+                // Store the selected songs in the drag data
+                var dragData = new DataObject();
+                dragData.SetData("QueueSongs", selectedSongs);
+                dragData.SetData("QueueIndices", queueListView.SelectedIndices.Cast<int>().ToList());
+                
+                queueListView.DoDragDrop(dragData, DragDropEffects.Move);
+            }
+        }
+    }
+
+    private void OnQueueDragEnter(object? sender, DragEventArgs e)
+    {
+        if (e.Data?.GetDataPresent("QueueSongs") == true)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+        else
+        {
+            e.Effect = DragDropEffects.None;
+        }
+    }
+
+    private void OnQueueDragOver(object? sender, DragEventArgs e)
+    {
+        if (e.Data?.GetDataPresent("QueueSongs") == true)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+        else
+        {
+            e.Effect = DragDropEffects.None;
+        }
+    }
+
+    private void OnQueueDragDrop(object? sender, DragEventArgs e)
+    {
+        if (e.Data?.GetDataPresent("QueueSongs") == true)
+        {
+            var selectedSongs = e.Data.GetData("QueueSongs") as List<Song>;
+            var selectedIndices = e.Data.GetData("QueueIndices") as List<int>;
+            
+            if (selectedSongs != null && selectedIndices != null)
+            {
+                // Get the drop target index
+                var dropPoint = queueListView.PointToClient(new Point(e.X, e.Y));
+                var dropItem = queueListView.GetItemAt(dropPoint.X, dropPoint.Y);
+                int targetIndex = dropItem?.Index ?? queueListView.Items.Count;
+                
+                // Remove the songs from their original positions
+                var sortedIndices = selectedIndices.OrderByDescending(i => i).ToList();
+                foreach (int index in sortedIndices)
+                {
+                    _queue.RemoveSong(index);
+                }
+                
+                // Insert the songs at the target position
+                for (int i = 0; i < selectedSongs.Count; i++)
+                {
+                    int insertIndex = targetIndex + i;
+                    if (insertIndex > _queue.Songs.Count)
+                    {
+                        insertIndex = _queue.Songs.Count;
+                    }
+                    _queue.InsertSong(insertIndex, selectedSongs[i]);
+                }
+                
+                // Update the display
+                UpdateQueueDisplay();
+                
+                // Select the moved items
+                queueListView.SelectedItems.Clear();
+                for (int i = 0; i < selectedSongs.Count; i++)
+                {
+                    int newIndex = targetIndex + i;
+                    if (newIndex < queueListView.Items.Count)
+                    {
+                        queueListView.Items[newIndex].Selected = true;
+                    }
+                }
+            }
+        }
+    }
+
+    private void OnQueueKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Delete && queueListView.SelectedItems.Count > 0)
+        {
+            e.Handled = true;
+            RemoveSelectedSongsFromQueue();
+        }
+    }
+
+    private void RemoveSelectedSongsFromQueue()
+    {
+        if (queueListView.SelectedItems.Count == 0) return;
+        
+        // Get selected indices in descending order to avoid index shifting issues
+        var selectedIndices = queueListView.SelectedIndices.Cast<int>().OrderByDescending(i => i).ToList();
+        
+        // Remove songs from queue
+        foreach (int index in selectedIndices)
+        {
+            if (index >= 0 && index < _queue.Songs.Count)
+            {
+                _queue.RemoveSong(index);
+            }
+        }
+        
+        // Update the display
+        UpdateQueueDisplay();
+        
+        // Show notification
+        var count = selectedIndices.Count;
+        var message = count == 1 ? "Song removed from queue" : $"{count} songs removed from queue";
+        _toastNotificationService?.ShowInfo("Queue Updated", message);
     }
 
     private async Task OnPlaylistItemDoubleClick()

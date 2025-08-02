@@ -25,17 +25,22 @@ public class YouTubeMusicDownloadService : IDownloadService
         Logger.Info("YouTube Music Download Service initialized");
     }
     
-    public async Task<string> DownloadAudioAsync(Song song, AudioStreamInfo streamInfo, CancellationToken cancellationToken = default)
+    public async Task<string> DownloadAudioAsync(Song song, CancellationToken cancellationToken = default)
     {
         Logger.Info($"Downloading audio for song: {song.Title}");
+        
+        if (song.SelectedStream == null)
+        {
+            throw new InvalidOperationException($"No selected stream for song: {song.Title}");
+        }
         
         return await ExecuteWithRetryAsync(async () =>
         {
             var tempFileName = Path.GetTempFileName();
-            var finalFileName = Path.ChangeExtension(tempFileName, streamInfo.Extension);
+            var finalFileName = Path.ChangeExtension(tempFileName, song.SelectedStream.Extension);
             
             // URL-decode the stream URL to fix "An invalid request URI was provided" error
-            var decodedUrl = UrlUtils.DecodeUrlWithLogging(streamInfo.Url, Logger);
+            var decodedUrl = UrlUtils.DecodeUrlWithLogging(song.SelectedStream.Url, Logger);
             
             using var response = await _httpClient.GetAsync(decodedUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();

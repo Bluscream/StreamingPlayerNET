@@ -270,7 +270,7 @@ public class CachingService
                     
                     try
                     {
-                        downloadedFilePath = await _downloadService.DownloadAudioAsync(song, streamInfo, cancellationToken);
+                        downloadedFilePath = await _downloadService.DownloadAudioAsync(song, cancellationToken);
                         
                         // Move the downloaded file to the cache location
                         if (File.Exists(downloadedFilePath))

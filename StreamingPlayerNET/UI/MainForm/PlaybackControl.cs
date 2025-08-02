@@ -127,6 +127,9 @@ public partial class MainForm
         {
             Logger.Info($"Current song time for {song.Title}: {currentTime.Value.TotalMilliseconds.Milliseconds()}");
         }
+        
+        // Refresh highlighting in all ListViews
+        RefreshAllListViewHighlighting();
     }
 
     private void OnPlaybackStateChanged(object? sender, StreamingPlayerNET.Common.Models.PlaybackState state)
@@ -161,6 +164,9 @@ public partial class MainForm
         // Update window title
         var currentSong = _musicPlayerService.GetCurrentSong();
         UpdateWindowTitle(currentSong, state);
+        
+        // Refresh highlighting when playback state changes
+        RefreshAllListViewHighlighting();
     }
 
     private void OnPositionChanged(object? sender, TimeSpan position)

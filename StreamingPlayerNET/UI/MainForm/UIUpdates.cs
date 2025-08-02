@@ -22,6 +22,9 @@ public partial class MainForm
         
         // Adjust columns after populating
         AdjustListViewColumns(listView);
+        
+        // Apply highlighting for currently playing song
+        HighlightCurrentlyPlayingSong(listView);
     }
     
     private void UpdateSearchResults(List<Song> songs)
@@ -240,5 +243,87 @@ public partial class MainForm
     private void ToggleSearchVisibility()
     {
         ToggleTabVisibility(searchTabPage, showSearchMenuItem.Checked);
+    }
+    
+    /// <summary>
+    /// Highlights the currently playing song in the specified ListView
+    /// </summary>
+    private void HighlightCurrentlyPlayingSong(ListView listView)
+    {
+        if (listView == null || listView.Items.Count == 0) return;
+        
+        var currentSong = _musicPlayerService?.GetCurrentSong();
+        if (currentSong == null) return;
+        
+        // Clear previous highlighting
+        ClearHighlighting(listView);
+        
+        // Find and highlight the currently playing song
+        foreach (ListViewItem item in listView.Items)
+        {
+            if (item.Tag is Song song && IsSameSong(song, currentSong))
+            {
+                HighlightItem(item);
+                break;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Clears highlighting from all items in the ListView
+    /// </summary>
+    private void ClearHighlighting(ListView listView)
+    {
+        foreach (ListViewItem item in listView.Items)
+        {
+            item.BackColor = SystemColors.Window;
+            item.ForeColor = SystemColors.WindowText;
+            item.Font = new Font(item.Font, FontStyle.Regular);
+        }
+    }
+    
+    /// <summary>
+    /// Applies highlighting to a ListViewItem to indicate it's currently playing
+    /// </summary>
+    private void HighlightItem(ListViewItem item)
+    {
+        // Use a more noticeable highlight color that works in both light and dark themes
+        item.BackColor = Color.FromArgb(255, 255, 200); // Light yellow background
+        item.ForeColor = Color.Black; // Black text for contrast
+        
+        // Make the text bold to make it more prominent
+        item.Font = new Font(item.Font, FontStyle.Bold);
+    }
+    
+    /// <summary>
+    /// Compares two songs to determine if they are the same
+    /// </summary>
+    private bool IsSameSong(Song song1, Song song2)
+    {
+        // Compare by ID first (most reliable)
+        if (!string.IsNullOrEmpty(song1.Id) && !string.IsNullOrEmpty(song2.Id))
+        {
+            return song1.Id.Equals(song2.Id, StringComparison.OrdinalIgnoreCase);
+        }
+        
+        // Fallback to title and artist comparison
+        return string.Equals(song1.Title, song2.Title, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(song1.Artist, song2.Artist, StringComparison.OrdinalIgnoreCase);
+    }
+    
+    /// <summary>
+    /// Refreshes highlighting in all ListViews when the current song changes
+    /// </summary>
+    private void RefreshAllListViewHighlighting()
+    {
+        if (InvokeRequired)
+        {
+            SafeInvoke(RefreshAllListViewHighlighting);
+            return;
+        }
+        
+        HighlightCurrentlyPlayingSong(searchListView);
+        HighlightCurrentlyPlayingSong(queueListView);
+        HighlightCurrentlyPlayingSong(playlistListView);
     }
 }

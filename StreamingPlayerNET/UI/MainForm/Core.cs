@@ -225,6 +225,9 @@ public partial class MainForm
     {
         // Save queue when songs change
         SaveCachedQueue();
+        
+        // Refresh highlighting when queue changes
+        RefreshAllListViewHighlighting();
     }
 
     private void OnQueueCurrentIndexChanged(object? sender, int currentIndex)

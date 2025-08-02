@@ -20,6 +20,11 @@ public class MusicPlayerService
     private Playlist? _currentPlaylist;
     private int _currentPlaylistIndex = -1;
     private bool _wasManuallyStopped = false;
+    private float _currentVolume = 1.0f;
+    
+    public Song? CurrentSong { get => _currentSong; set => _currentSong = value; }
+    public Playlist? CurrentPlaylist { get => _currentPlaylist; set => _currentPlaylist = value; }
+    public float CurrentVolume { get => _currentVolume; set => _currentVolume = value; }
     
     public event EventHandler<Song>? SongChanged;
     public event EventHandler<PlaybackState>? PlaybackStateChanged;
@@ -55,11 +60,11 @@ public class MusicPlayerService
         _playbackService.PositionChanged += (s, position) => PositionChanged?.Invoke(this, position);
         _playbackService.PlaybackCompleted += (s, e) => 
         {
-            if (_currentSong != null)
+            if (CurrentSong != null)
             {
-                _currentSong.StopSongTimer();
-                var totalTime = _currentSong.GetCurrentSongTime();
-                Logger.Info($"Song playback completed: {_currentSong.Title} - Total time from start to finish: {totalTime?.TotalMilliseconds.Milliseconds()}");
+                CurrentSong.StopSongTimer();
+                var totalTime = CurrentSong.GetCurrentSongTime();
+                Logger.Info($"Song playback completed: {CurrentSong.Title} - Total time from start to finish: {totalTime?.TotalMilliseconds.Milliseconds()}");
             }
             PlaybackCompleted?.Invoke(this, e);
         };
@@ -146,7 +151,7 @@ public class MusicPlayerService
             var playbackSetupDuration = playbackEndTime - playbackStartTime;
             Logger.Info($"Audio playback setup completed in {playbackSetupDuration?.TotalMilliseconds.Milliseconds()}");
             
-            _currentSong = song;
+            CurrentSong = song;
             if (song is QueueSong queueSongForPlaying)
             {
                 queueSongForPlaying.State = PlaybackState.Playing;
@@ -186,7 +191,7 @@ public class MusicPlayerService
     {
         Logger.Info($"Playing playlist: {playlist.Name} (starting at index {startIndex})");
         
-        _currentPlaylist = playlist;
+        CurrentPlaylist = playlist;
         _currentPlaylistIndex = startIndex - 1; // Will be incremented in PlayNextSongAsync
         
         await PlayNextSongAsync(cancellationToken);
@@ -194,7 +199,7 @@ public class MusicPlayerService
     
     public async Task PlayNextSongAsync(CancellationToken cancellationToken = default)
     {
-        if (_currentPlaylist == null || _currentPlaylist.Songs.Count == 0)
+        if (CurrentPlaylist == null || CurrentPlaylist.Songs.Count == 0)
         {
             Logger.Warn("No current playlist or playlist is empty");
             return;
@@ -202,21 +207,21 @@ public class MusicPlayerService
         
         _currentPlaylistIndex++;
         
-        if (_currentPlaylistIndex >= _currentPlaylist.Songs.Count)
+        if (_currentPlaylistIndex >= CurrentPlaylist.Songs.Count)
         {
             Logger.Info("Reached end of playlist");
             _currentPlaylistIndex = 0; // Loop back to beginning
         }
         
-        var song = _currentPlaylist.Songs[_currentPlaylistIndex];
-        Logger.Info($"Playing next song in playlist: {song.Title} (index {_currentPlaylistIndex + 1}/{_currentPlaylist.Songs.Count})");
+        var song = CurrentPlaylist.Songs[_currentPlaylistIndex];
+        Logger.Info($"Playing next song in playlist: {song.Title} (index {_currentPlaylistIndex + 1}/{CurrentPlaylist.Songs.Count})");
         
         await PlaySongAsync(song, cancellationToken);
     }
     
     public async Task PlayPreviousSongAsync(CancellationToken cancellationToken = default)
     {
-        if (_currentPlaylist == null || _currentPlaylist.Songs.Count == 0)
+        if (CurrentPlaylist == null || CurrentPlaylist.Songs.Count == 0)
         {
             Logger.Warn("No current playlist or playlist is empty");
             return;
@@ -226,11 +231,11 @@ public class MusicPlayerService
         
         if (_currentPlaylistIndex < 0)
         {
-            _currentPlaylistIndex = _currentPlaylist.Songs.Count - 1; // Loop to end
+            _currentPlaylistIndex = CurrentPlaylist.Songs.Count - 1; // Loop to end
         }
         
-        var song = _currentPlaylist.Songs[_currentPlaylistIndex];
-        Logger.Info($"Playing previous song in playlist: {song.Title} (index {_currentPlaylistIndex + 1}/{_currentPlaylist.Songs.Count})");
+        var song = CurrentPlaylist.Songs[_currentPlaylistIndex];
+        Logger.Info($"Playing previous song in playlist: {song.Title} (index {_currentPlaylistIndex + 1}/{CurrentPlaylist.Songs.Count})");
         
         await PlaySongAsync(song, cancellationToken);
     }
@@ -239,17 +244,17 @@ public class MusicPlayerService
     {
         Logger.Info("Pausing playback");
         _playbackService.Pause();
-        if (_currentSong != null)
+        if (CurrentSong != null)
         {
-            if (_currentSong is QueueSong queueSongForPause)
+            if (CurrentSong is QueueSong queueSongForPause)
             {
                 queueSongForPause.State = PlaybackState.Paused;
             }
-            var pauseTime = _currentSong.GetCurrentSongTime();
+            var pauseTime = CurrentSong.GetCurrentSongTime();
             Logger.Info($"Song paused at {pauseTime?.TotalMilliseconds.Milliseconds()} into the process");
             
             // If it's a QueueSong, save the current position
-            if (_currentSong is QueueSong queueSongForRecord)
+            if (CurrentSong is QueueSong queueSongForRecord)
             {
                 queueSongForRecord.RecordPlaybackPause();
             }
@@ -260,17 +265,17 @@ public class MusicPlayerService
     {
         Logger.Info("Resuming playback");
         _playbackService.Resume();
-        if (_currentSong != null)
+        if (CurrentSong != null)
         {
-            if (_currentSong is QueueSong queueSongForResume)
+            if (CurrentSong is QueueSong queueSongForResume)
             {
                 queueSongForResume.State = PlaybackState.Playing;
             }
-            var resumeTime = _currentSong.GetCurrentSongTime();
+            var resumeTime = CurrentSong.GetCurrentSongTime();
             Logger.Info($"Song resumed at {resumeTime?.TotalMilliseconds.Milliseconds()} into the process");
             
             // If it's a QueueSong, record playback start
-            if (_currentSong is QueueSong queueSongForRecord)
+            if (CurrentSong is QueueSong queueSongForRecord)
             {
                 queueSongForRecord.RecordPlaybackStart();
             }
@@ -282,18 +287,18 @@ public class MusicPlayerService
         Logger.Info("Stopping playback");
         _wasManuallyStopped = true;
         _playbackService.Stop();
-        if (_currentSong != null)
+        if (CurrentSong != null)
         {
-            if (_currentSong is QueueSong queueSongForStop)
+            if (CurrentSong is QueueSong queueSongForStop)
             {
                 queueSongForStop.State = PlaybackState.Stopped;
             }
-            _currentSong.StopSongTimer();
-            var stopTime = _currentSong.GetCurrentSongTime();
+            CurrentSong.StopSongTimer();
+            var stopTime = CurrentSong.GetCurrentSongTime();
             Logger.Info($"Song stopped after {stopTime?.TotalMilliseconds.Milliseconds()} - process terminated early");
             
             // If it's a QueueSong, save the current position for later resumption
-            if (_currentSong is QueueSong queueSongForSave)
+            if (CurrentSong is QueueSong queueSongForSave)
             {
                 queueSongForSave.SaveCurrentPosition();
             }
@@ -304,9 +309,10 @@ public class MusicPlayerService
     {
         Logger.Debug($"Setting volume to: {volume:P0}");
         _playbackService.SetVolume(volume);
-        if (_currentSong != null)
+        CurrentVolume = volume;
+        if (CurrentSong != null)
         {
-            _currentSong.Volume = volume;
+            CurrentSong.Volume = volume;
         }
         
         // Fire volume changed event
@@ -316,15 +322,15 @@ public class MusicPlayerService
     public void SetPosition(TimeSpan position)
     {
         _playbackService.SetPosition(position);
-        if (_currentSong is QueueSong queueSong)
+        if (CurrentSong is QueueSong queueSong)
         {
             queueSong.CurrentPosition = position;
         }
     }
     
     // Getters for current state
-    public Song? GetCurrentSong() => _currentSong;
-    public Playlist? GetCurrentPlaylist() => _currentPlaylist;
+    public Song? GetCurrentSong() => CurrentSong;
+    public Playlist? GetCurrentPlaylist() => CurrentPlaylist;
     public int GetCurrentPlaylistIndex() => _currentPlaylistIndex;
     public PlaybackState GetPlaybackState() => _playbackService.GetPlaybackState();
     public TimeSpan GetCurrentPosition() => _playbackService.GetCurrentPosition();
@@ -354,5 +360,5 @@ public class MusicPlayerService
     /// <summary>
     /// Gets the current song as a QueueSong
     /// </summary>
-    public QueueSong? GetCurrentQueueSong() => _currentSong as QueueSong;
+    public QueueSong? GetCurrentQueueSong() => CurrentSong as QueueSong;
 } 

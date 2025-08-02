@@ -120,6 +120,13 @@ public class SpotifyDownloadService : IDownloadService
 
             return string.Empty;
         }
+        catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 2)
+        {
+            Logger.Error(ex, $"yt-dlp.exe not found. Full error details: {ex}");
+            var errorMessage = "yt-dlp.exe missing. Please ensure yt-dlp.exe is available in the application directory.";
+            Logger.Error(errorMessage);
+            throw new InvalidOperationException(errorMessage, ex);
+        }
         catch (Exception ex)
         {
             Logger.Error(ex, $"Error downloading Spotify audio: {songTitle ?? streamInfo.Url}");

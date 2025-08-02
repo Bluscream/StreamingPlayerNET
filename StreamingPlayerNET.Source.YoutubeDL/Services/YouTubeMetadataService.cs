@@ -54,6 +54,14 @@ public class YouTubeMetadataService : IMetadataService
             Logger.Warn("YouTube Metadata Service initialization was cancelled");
             throw;
         }
+        catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 2)
+        {
+            var errorMessage = "yt-dlp.exe not found during initialization. Full error details: " + ex;
+            Logger.Error(errorMessage);
+            // Don't throw - just log the error and continue
+            _isInitialized = true; // Mark as initialized anyway to prevent retry loops
+            return Task.CompletedTask;
+        }
         catch (Exception ex)
         {
             Logger.Error(ex, "Failed to initialize YouTube Metadata Service");
@@ -169,6 +177,14 @@ public class YouTubeMetadataService : IMetadataService
             stopwatch.Stop();
             Logger.Info($"Found {streams.Count} audio streams for song ID: {songId} in {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
             return streams;
+        }
+        catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 2)
+        {
+            stopwatch.Stop();
+            Logger.Error(ex, $"yt-dlp.exe not found. Full error details: {ex}");
+            var errorMessage = "yt-dlp.exe missing. Please ensure yt-dlp.exe is available in the application directory.";
+            Logger.Error(errorMessage);
+            throw new InvalidOperationException(errorMessage, ex);
         }
         catch (Exception ex)
         {

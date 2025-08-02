@@ -26,9 +26,9 @@
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="NLog.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="NLog.config">
+      <LogicalName>StreamingPlayerNET.NLog.config</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="..\logo.ico">
       <LogicalName>StreamingPlayerNET.logo.ico</LogicalName>
     </EmbeddedResource>

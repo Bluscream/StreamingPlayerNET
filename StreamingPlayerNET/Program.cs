@@ -1,6 +1,7 @@
 using NLog;
 using StreamingPlayerNET.UI;
 using StreamingPlayerNET.Services;
+using System.Reflection;
 
 namespace StreamingPlayerNET;
 
@@ -26,8 +27,30 @@ static class Program
                 Directory.CreateDirectory(logsFolder);
             }
             
-            // Initialize NLog
-            LogManager.Setup().LoadConfigurationFromFile("NLog.config");
+            // Initialize NLog - try external file first, then embedded resource
+            var nlogConfigPath = "NLog.config";
+            if (File.Exists(nlogConfigPath))
+            {
+                LogManager.Setup().LoadConfigurationFromFile(nlogConfigPath);
+            }
+            else
+            {
+                // Load from embedded resource
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = "StreamingPlayerNET.NLog.config";
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream != null)
+                {
+                    using var reader = new StreamReader(stream);
+                    var configContent = reader.ReadToEnd();
+                    var config = NLog.Config.XmlLoggingConfiguration.CreateFromXmlString(configContent);
+                    LogManager.Configuration = config;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Could not find NLog configuration in external file '{nlogConfigPath}' or embedded resource '{resourceName}'");
+                }
+            }
             
             // Initialize configuration service first
             _configService = new ConfigurationService();

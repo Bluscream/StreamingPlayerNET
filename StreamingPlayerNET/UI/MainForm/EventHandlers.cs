@@ -36,7 +36,7 @@ public partial class MainForm
         {
             var volume = volumeTrackBar.Value / 100f;
             _musicPlayerService?.SetVolume(volume);
-            volumeLabel.Text = $"{volumeTrackBar.Value}%";
+            volumeLabel.Text = $"🔊 {volumeTrackBar.Value}%";
         };
         
         // Search tab events

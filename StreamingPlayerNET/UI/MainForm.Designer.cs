@@ -744,6 +744,7 @@ partial class MainForm
         playbackControlsPanel.Controls.Add(shuffleButton);
         playbackControlsPanel.Controls.Add(stopButton);
         playbackControlsPanel.Controls.Add(playPauseButton);
+        playbackControlsPanel.Controls.Add(volumeTrackBar);
         playbackControlsPanel.Dock = DockStyle.Bottom;
         playbackControlsPanel.Location = new Point(0, 21);
         playbackControlsPanel.Name = "playbackControlsPanel";
@@ -826,7 +827,7 @@ partial class MainForm
         seekBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         seekBar.Location = new Point(50, 1);
         seekBar.Name = "seekBar";
-        seekBar.Size = new Size(880, 23);
+        seekBar.Size = new Size(780, 23);
         seekBar.TabIndex = 1;
         // 
         // elapsedTimeLabel
@@ -844,7 +845,7 @@ partial class MainForm
         remainingTimeLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         remainingTimeLabel.AutoSize = true;
         remainingTimeLabel.Cursor = Cursors.Hand;
-        remainingTimeLabel.Location = new Point(946, 4);
+        remainingTimeLabel.Location = new Point(846, 4);
         remainingTimeLabel.Name = "remainingTimeLabel";
         remainingTimeLabel.Size = new Size(34, 15);
         remainingTimeLabel.TabIndex = 3;
@@ -888,17 +889,17 @@ partial class MainForm
         volumeLabel.BorderStyle = Border3DStyle.Etched;
         volumeLabel.Name = "volumeLabel";
         volumeLabel.Size = new Size(30, 19);
-        volumeLabel.Text = "Vol:";
+        volumeLabel.Text = "";
         volumeLabel.TextAlign = ContentAlignment.MiddleRight;
         // 
         // volumeTrackBar
         // 
         volumeTrackBar.Anchor = AnchorStyles.Right;
-        volumeTrackBar.Location = new Point(900, 3);
+        volumeTrackBar.Location = new Point(900, 2);
         volumeTrackBar.Maximum = 100;
         volumeTrackBar.Name = "volumeTrackBar";
-        volumeTrackBar.Size = new Size(100, 45);
-        volumeTrackBar.TabIndex = 0;
+        volumeTrackBar.Size = new Size(100, 25);
+        volumeTrackBar.TabIndex = 7;
         volumeTrackBar.Value = 50;
         // 
         // MainForm
@@ -910,7 +911,6 @@ partial class MainForm
         Controls.Add(playerPanel);
         Controls.Add(statusStrip);
         Controls.Add(menuStrip);
-        Controls.Add(volumeTrackBar);
         MainMenuStrip = menuStrip;
         MinimumSize = new Size(800, 630);
         Name = "MainForm";

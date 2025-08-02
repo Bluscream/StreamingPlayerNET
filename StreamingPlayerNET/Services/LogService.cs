@@ -11,6 +11,7 @@ public class LogService
     private readonly int _maxEntries = 100;
     private bool _isSetupComplete = false;
     private ConfigurationService? _configService;
+    private Configuration? _cachedConfig;
 
     
     public event EventHandler<LogEntry>? LogEntryAdded;
@@ -19,6 +20,17 @@ public class LogService
     public LogService(ConfigurationService? configService = null)
     {
         _configService = configService;
+        
+        // Cache the configuration to avoid recursive calls
+        try
+        {
+            _cachedConfig = ConfigurationService.Current;
+        }
+        catch
+        {
+            // If we can't get the config, we'll use defaults
+            _cachedConfig = null;
+        }
         
         // Subscribe to NLog events
         LogManager.ConfigurationChanged += OnConfigurationChanged;
@@ -86,13 +98,10 @@ public class LogService
     
     private bool ShouldDisplayLogEntry(LogEntry entry)
     {
-        // If no config service, show all entries
-        if (_configService == null)
-            return true;
-            
-        var config = ConfigurationService.Current;
+        // Use cached configuration to avoid recursive calls
+        var config = _cachedConfig;
         if (config == null)
-            return true;
+            return true; // Show all entries if no config available
         
         // Check if debug mode is enabled
         if (config.EnableDebugMode)

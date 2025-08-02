@@ -410,7 +410,7 @@ public partial class MainForm
         volumeTrackBar.Value = newValue;
         var volume = newValue / 100f;
         _musicPlayerService.SetVolume(volume);
-        volumeLabel.Text = $"{newValue}%";
+        volumeLabel.Text = $"🔊 {newValue}%";
         Logger.Debug($"Volume adjusted to: {newValue}%");
     }
 
@@ -459,7 +459,7 @@ public partial class MainForm
         // Update volume track bar and label
         var volumePercentage = (int)(volume * 100);
         volumeTrackBar.Value = Math.Max(0, Math.Min(100, volumePercentage));
-        volumeLabel.Text = $"{volumePercentage}%";
+        volumeLabel.Text = $"🔊 {volumePercentage}%";
         
         Logger.Debug($"Volume changed to: {volumePercentage}%");
     }

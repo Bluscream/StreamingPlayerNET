@@ -162,7 +162,7 @@ public partial class MainForm
         }
         
         // Update window title
-        var currentSong = _musicPlayerService.GetCurrentSong();
+        var currentSong = _musicPlayerService.CurrentSong;
         UpdateWindowTitle(currentSong, state);
         
         // Refresh highlighting when playback state changes
@@ -187,7 +187,7 @@ public partial class MainForm
             return;
         }
         
-        var currentSong = _musicPlayerService.GetCurrentSong();
+        var currentSong = _musicPlayerService.CurrentSong;
         var currentPosition = _musicPlayerService.GetCurrentPosition();
         var totalDuration = _musicPlayerService.GetTotalDuration();
         
@@ -296,7 +296,7 @@ public partial class MainForm
         else
         {
             // If no previous song, restart current song from beginning
-            var currentSong = _queue.CurrentSong ?? _musicPlayerService.GetCurrentSong();
+            var currentSong = _queue.CurrentSong ?? _musicPlayerService.CurrentSong;
             if (currentSong != null)
             {
                 Logger.Info("No previous songs in queue - restarting current song from beginning");

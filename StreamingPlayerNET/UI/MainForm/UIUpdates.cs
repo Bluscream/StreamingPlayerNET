@@ -90,7 +90,7 @@ public partial class MainForm
     {
         try
         {
-            var playlist = _musicPlayerService?.GetCurrentPlaylist();
+            var playlist = _musicPlayerService?.CurrentPlaylist;
             var playlistIndex = _musicPlayerService?.GetCurrentPlaylistIndex() ?? 0;
             var position = _musicPlayerService?.GetCurrentPosition() ?? TimeSpan.Zero;
             var duration = _musicPlayerService?.GetTotalDuration();
@@ -252,7 +252,7 @@ public partial class MainForm
     {
         if (listView == null || listView.Items.Count == 0) return;
         
-        var currentSong = _musicPlayerService?.GetCurrentSong();
+        var currentSong = _musicPlayerService?.CurrentSong;
         if (currentSong == null) return;
         
         // Clear previous highlighting

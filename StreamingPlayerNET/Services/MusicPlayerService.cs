@@ -22,9 +22,9 @@ public class MusicPlayerService
     private bool _wasManuallyStopped = false;
     private float _currentVolume = 1.0f;
     
-    public Song? CurrentSong { get => _currentSong; set => _currentSong = value; }
-    public Playlist? CurrentPlaylist { get => _currentPlaylist; set => _currentPlaylist = value; }
-    public float CurrentVolume { get => _currentVolume; set => _currentVolume = value; }
+    public Song? CurrentSong { get => _currentSong; private set => _currentSong = value; }
+    public Playlist? CurrentPlaylist { get => _currentPlaylist; private set => _currentPlaylist = value; }
+    public float CurrentVolume { get => _currentVolume; private set => _currentVolume = value; }
     
     public event EventHandler<Song>? SongChanged;
     public event EventHandler<PlaybackState>? PlaybackStateChanged;
@@ -329,8 +329,6 @@ public class MusicPlayerService
     }
     
     // Getters for current state
-    public Song? GetCurrentSong() => CurrentSong;
-    public Playlist? GetCurrentPlaylist() => CurrentPlaylist;
     public int GetCurrentPlaylistIndex() => _currentPlaylistIndex;
     public PlaybackState GetPlaybackState() => _playbackService.GetPlaybackState();
     public TimeSpan GetCurrentPosition() => _playbackService.GetCurrentPosition();

@@ -146,7 +146,7 @@ public class WindowsMediaService : IDisposable
     
     private void OnPlaybackStateChanged(object? sender, PlaybackState state)
     {
-        var currentSong = _musicPlayerService.GetCurrentSong();
+                    var currentSong = _musicPlayerService.CurrentSong;
         UpdateMediaInfo(currentSong, state);
     }
     

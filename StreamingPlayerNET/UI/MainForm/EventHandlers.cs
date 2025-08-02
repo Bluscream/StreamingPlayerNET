@@ -97,7 +97,7 @@ public partial class MainForm
     {
         try
         {
-            var currentSong = _musicPlayerService?.GetCurrentSong();
+            var currentSong = _musicPlayerService?.CurrentSong;
             if (currentSong != null && (_musicPlayerService?.IsPlaying ?? false))
             {
                 var position = _musicPlayerService?.GetCurrentPosition() ?? TimeSpan.Zero;
@@ -180,7 +180,7 @@ public partial class MainForm
             ConfigurationService.SaveConfiguration();
             
             // Update the display immediately if a song is playing
-            var currentSong = _musicPlayerService?.GetCurrentSong();
+            var currentSong = _musicPlayerService?.CurrentSong;
             if (currentSong != null && (_musicPlayerService?.IsPlaying ?? false))
             {
                 var position = _musicPlayerService?.GetCurrentPosition() ?? TimeSpan.Zero;

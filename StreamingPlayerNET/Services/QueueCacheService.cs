@@ -13,7 +13,7 @@ public class QueueCacheService
         "queue_cache.json");
     
     // Throttling mechanism to prevent too frequent saves
-    private static Timer? _saveTimer;
+    private static System.Threading.Timer? _saveTimer;
     private static Queue? _pendingQueue;
     private static readonly object _saveLock = new object();
     private static readonly TimeSpan SaveThrottleInterval = TimeSpan.FromMilliseconds(500); // 500ms throttle
@@ -27,7 +27,7 @@ public class QueueCacheService
             
             // Reset the timer
             _saveTimer?.Dispose();
-            _saveTimer = new Timer(_ => PerformSave(), null, SaveThrottleInterval, Timeout.InfiniteTimeSpan);
+            _saveTimer = new System.Threading.Timer(_ => PerformSave(), null, SaveThrottleInterval, Timeout.InfiniteTimeSpan);
         }
     }
     

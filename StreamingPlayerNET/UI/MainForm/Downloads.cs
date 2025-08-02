@@ -108,6 +108,9 @@ public partial class MainForm
         
         try
         {
+            // Generate cache key to match the one used by CachingService
+            var cacheKey = GenerateCacheKey(song, streamInfo);
+            
             var downloadInfo = new DownloadInfo
             {
                 Title = song.Title ?? "Unknown",
@@ -117,6 +120,7 @@ public partial class MainForm
                 TotalBytes = 0,
                 StartTime = DateTime.Now,
                 EstimatedTimeRemaining = TimeSpan.Zero,
+                CacheKey = cacheKey,
                 Song = song,
                 StreamInfo = streamInfo
             };
@@ -124,12 +128,23 @@ public partial class MainForm
             _downloads.Add(downloadInfo);
             UpdateDownloadsDisplay();
             
-            Logger.Debug($"Added download: {song.Title}");
+            Logger.Debug($"Added download: {song.Title} with cache key: {cacheKey}");
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "Failed to add download to UI");
         }
+    }
+    
+    private string GenerateCacheKey(Song song, AudioStreamInfo streamInfo)
+    {
+        // Create a unique cache key based on song metadata and codec
+        // Use a more stable key that doesn't depend on stream-specific info
+        var keyData = $"{song.Title}_{song.Artist}_{song.Album}";
+        
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(keyData));
+        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
     
     public void UpdateDownloadProgress(string cacheKey, long bytesDownloaded, long totalBytes, string status = "Downloading")
@@ -280,11 +295,22 @@ public partial class MainForm
                 cacheKey = parts[1];
             }
             
+            Logger.Debug($"Progress event received for '{songTitle}' with cache key: {cacheKey}");
+            Logger.Debug($"Current downloads in list: {_downloads.Count}");
+            foreach (var d in _downloads)
+            {
+                Logger.Debug($"  - {d.Title} (CacheKey: {d.CacheKey}, Status: {d.Status}, Progress: {d.BytesDownloaded}/{d.TotalBytes})");
+            }
+            
             // Try to find the download by cache key first (most reliable)
             DownloadInfo? download = null;
             if (!string.IsNullOrEmpty(cacheKey))
             {
                 download = _downloads.FirstOrDefault(d => d.CacheKey == cacheKey);
+                if (download != null)
+                {
+                    Logger.Debug($"Found download by cache key: {download.Title}");
+                }
             }
             
             // Fallback to finding by song title if cache key matching failed
@@ -295,11 +321,14 @@ public partial class MainForm
                     .OrderByDescending(d => d.StartTime)
                     .ToList();
                     
+                Logger.Debug($"Found {matchingDownloads.Count} downloads matching title '{songTitle}'");
+                
                 if (matchingDownloads.Count > 0)
                 {
                     // If multiple downloads match, try to find the one that's most likely to be the current one
                     // by checking if it has any progress already or if it's the most recent
                     download = matchingDownloads.FirstOrDefault(d => d.BytesDownloaded > 0) ?? matchingDownloads.First();
+                    Logger.Debug($"Selected download: {download.Title} (CacheKey: {download.CacheKey})");
                 }
             }
                 
@@ -308,6 +337,7 @@ public partial class MainForm
                 // Only update if this download doesn't already have more progress (to avoid overwriting with older progress)
                 if (download.BytesDownloaded <= e.BytesReceived || download.TotalBytes == 0)
                 {
+                    var oldProgress = download.BytesDownloaded;
                     download.BytesDownloaded = e.BytesReceived;
                     download.TotalBytes = e.TotalBytes;
                     download.Status = "Downloading";
@@ -324,7 +354,7 @@ public partial class MainForm
                         }
                     }
                     
-                    Logger.Debug($"Updated progress for {download.Title}: {e.BytesReceived}/{e.TotalBytes} bytes ({e.BytesReceived * 100.0 / e.TotalBytes:F1}%)");
+                    Logger.Debug($"Updated progress for {download.Title}: {oldProgress} -> {e.BytesReceived}/{e.TotalBytes} bytes ({e.BytesReceived * 100.0 / e.TotalBytes:F1}%)");
                     UpdateDownloadsDisplay();
                 }
                 else
@@ -335,6 +365,11 @@ public partial class MainForm
             else
             {
                 Logger.Debug($"Could not find download for progress update: {songTitle} (CacheKey: {cacheKey})");
+                Logger.Debug("Available downloads:");
+                foreach (var d in _downloads)
+                {
+                    Logger.Debug($"  - {d.Title} (CacheKey: {d.CacheKey}, Status: {d.Status})");
+                }
             }
         }
         catch (Exception ex)

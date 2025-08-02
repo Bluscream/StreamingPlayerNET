@@ -8,6 +8,7 @@ public class LogService
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly ConcurrentQueue<LogEntry> _logEntries = new();
     private readonly int _maxEntries = 100;
+    private bool _isSetupComplete = false;
 
     
     public event EventHandler<LogEntry>? LogEntryAdded;
@@ -18,71 +19,65 @@ public class LogService
         // Subscribe to NLog events
         LogManager.ConfigurationChanged += OnConfigurationChanged;
         
-        // Setup log target asynchronously to avoid blocking constructor
-        Task.Run(async () => 
-        {
-            try
-            {
-                // Small delay to ensure the constructor completes first
-                await Task.Delay(10);
-                SetupLogTarget();
-            }
-            catch (Exception ex)
-            {
-                // Log setup failed, but don't block initialization
-                Logger.Warn(ex, "Failed to setup log capture target");
-            }
-        });
+        // Setup log target immediately to capture all log entries
+        SetupLogTarget();
     }
     
     private void SetupLogTarget()
     {
-        // Create a custom target that captures log entries
-        var logCaptureTarget = new LogCaptureTarget(this);
+        if (_isSetupComplete) return; // Prevent multiple setups
         
-        // Get current configuration or create new one if null
-        var config = LogManager.Configuration ?? new NLog.Config.LoggingConfiguration();
-        
-        // Remove any existing logCapture target to avoid duplicates
-        if (config.FindTargetByName("logCapture") != null)
+        try
         {
-            config.RemoveTarget("logCapture");
-            // Also remove associated rules
-            for (int i = config.LoggingRules.Count - 1; i >= 0; i--)
+            // Create a custom target that captures log entries
+            var logCaptureTarget = new LogCaptureTarget(this);
+            
+            // Get current configuration or create new one if null
+            var config = LogManager.Configuration ?? new NLog.Config.LoggingConfiguration();
+            
+            // Remove any existing logCapture target to avoid duplicates
+            if (config.FindTargetByName("logCapture") != null)
             {
-                var existingRule = config.LoggingRules[i];
-                if (existingRule.Targets.Any(t => t.Name == "logCapture"))
+                config.RemoveTarget("logCapture");
+                // Also remove associated rules
+                for (int i = config.LoggingRules.Count - 1; i >= 0; i--)
                 {
-                    config.LoggingRules.RemoveAt(i);
+                    var existingRule = config.LoggingRules[i];
+                    if (existingRule.Targets.Any(t => t.Name == "logCapture"))
+                    {
+                        config.LoggingRules.RemoveAt(i);
+                    }
                 }
             }
+            
+            // Add the target to NLog configuration
+            config.AddTarget("logCapture", logCaptureTarget);
+            
+            // Add rule to capture all log entries
+            var newRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, logCaptureTarget);
+            config.LoggingRules.Add(newRule);
+            
+            // Apply the configuration
+            LogManager.Configuration = config;
+            
+            _isSetupComplete = true;
+            Logger.Debug("Log capture target setup completed");
         }
-        
-        // Add the target to NLog configuration
-        config.AddTarget("logCapture", logCaptureTarget);
-        
-        // Add rule to capture all log entries
-        var newRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, logCaptureTarget);
-        config.LoggingRules.Add(newRule);
-        
-        LogManager.Configuration = config;
+        catch (Exception ex)
+        {
+            // Log setup failed, but don't block initialization
+            Logger.Warn(ex, "Failed to setup log capture target");
+        }
     }
     
     private void OnConfigurationChanged(object? sender, NLog.Config.LoggingConfigurationChangedEventArgs e)
     {
-        // Re-setup the log capture target if configuration changes (asynchronously)
-        Task.Run(async () => 
+        // Only re-setup if our target was removed
+        if (LogManager.Configuration?.FindTargetByName("logCapture") == null)
         {
-            try
-            {
-                await Task.Delay(10); // Brief delay to ensure configuration is stable
-                SetupLogTarget();
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex, "Failed to re-setup log capture target after configuration change");
-            }
-        });
+            _isSetupComplete = false;
+            SetupLogTarget();
+        }
     }
     
     public void AddLogEntry(LogEntry entry)

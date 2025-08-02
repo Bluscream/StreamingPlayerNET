@@ -1,11 +1,13 @@
 using NLog;
 using StreamingPlayerNET.UI;
+using StreamingPlayerNET.Services;
 
 namespace StreamingPlayerNET;
 
 static class Program
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static LogService? _logService;
     
     /// <summary>
     ///  The main entry point for the application.
@@ -25,6 +27,10 @@ static class Program
             
             // Initialize NLog
             LogManager.Setup().LoadConfigurationFromFile("NLog.config");
+            
+            // Initialize LogService immediately after NLog configuration to capture all logs
+            _logService = new LogService();
+            
             Logger.Info("=== StreamingPlayerNET Application Starting ===");
             Logger.Info($"Operating System: {Environment.OSVersion}");
             Logger.Info($".NET Version: {Environment.Version}");
@@ -36,7 +42,7 @@ static class Program
             Logger.Debug("Application configuration initialized");
             
             Logger.Info("Starting main application form");
-            Application.Run(new MainForm());
+            Application.Run(new MainForm(_logService));
             
             Logger.Info("Application form closed, main thread ending");
         }
@@ -49,6 +55,7 @@ static class Program
         finally
         {
             Logger.Info("=== StreamingPlayerNET Application Ended ===");
+            _logService?.Dispose();
             LogManager.Shutdown();
         }
     }    

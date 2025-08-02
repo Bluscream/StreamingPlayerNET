@@ -61,30 +61,13 @@ public partial class MainForm
         
         try
         {
-            // Get current downloads from caching service
-            var cachingService = _playbackService?.GetCachingService();
-            if (cachingService == null) return;
+            // Use the actual downloads list instead of creating a generic entry
+            var currentDownloads = new List<DownloadInfo>(_downloads);
             
-            var ongoingCount = cachingService.GetOngoingDownloadCount();
-            
-            // Update downloads list
-            var currentDownloads = new List<DownloadInfo>();
-            
-            // For now, we'll show a simple status
-            // In a more advanced implementation, we could track individual downloads
-            if (ongoingCount > 0)
+            Logger.Debug($"Updating downloads display with {currentDownloads.Count} downloads");
+            foreach (var download in currentDownloads)
             {
-                var downloadInfo = new DownloadInfo
-                {
-                    Title = "Multiple downloads",
-                    Artist = "Various artists",
-                    Status = "Downloading",
-                    BytesDownloaded = 0,
-                    TotalBytes = 0,
-                    StartTime = DateTime.Now,
-                    EstimatedTimeRemaining = TimeSpan.Zero
-                };
-                currentDownloads.Add(downloadInfo);
+                Logger.Debug($"  - {download.Title} by {download.Artist}: {download.Status} ({download.FormattedProgress})");
             }
             
             // Update the display
@@ -267,7 +250,8 @@ public partial class MainForm
         {
             _downloads.Add(downloadInfo);
             UpdateDownloadsDisplay();
-            Logger.Debug($"Download started: {downloadInfo.Title}");
+            Logger.Debug($"Download started: {downloadInfo.Title} by {downloadInfo.Artist} (CacheKey: {downloadInfo.CacheKey})");
+            Logger.Debug($"Total downloads in list: {_downloads.Count}");
         }
         catch (Exception ex)
         {
@@ -286,7 +270,12 @@ public partial class MainForm
         try
         {
             // Find the download by song title (since we don't have cache key in the progress event)
-            var download = _downloads.FirstOrDefault(d => d.Title == e.SongTitle);
+            // Try to find the most recent download with this title that's still downloading
+            var download = _downloads
+                .Where(d => d.Title == e.SongTitle && d.Status != "Completed" && d.Status != "Failed")
+                .OrderByDescending(d => d.StartTime)
+                .FirstOrDefault();
+                
             if (download != null)
             {
                 download.BytesDownloaded = e.BytesReceived;
@@ -306,6 +295,10 @@ public partial class MainForm
                 }
                 
                 UpdateDownloadsDisplay();
+            }
+            else
+            {
+                Logger.Debug($"Could not find download for progress update: {e.SongTitle}");
             }
         }
         catch (Exception ex)

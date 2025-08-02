@@ -5,6 +5,7 @@ using NLog;
 using System.Diagnostics;
 using Humanizer;
 using static StreamingPlayerNET.Common.Models.PlaybackState;
+using StreamingPlayerNET.Services;
 
 namespace StreamingPlayerNET.Services;
 
@@ -23,6 +24,7 @@ public class NAudioPlaybackService : IPlaybackService
     public event EventHandler<StreamingPlayerNET.Common.Models.PlaybackState>? PlaybackStateChanged;
     public event EventHandler<TimeSpan>? PositionChanged;
     public event EventHandler? PlaybackCompleted;
+    public event EventHandler<PlaybackErrorEventArgs>? PlaybackError;
     
     public bool IsPlaying => _audioOutput?.PlaybackState == NAudio.Wave.PlaybackState.Playing;
     public bool IsPaused => _audioOutput?.PlaybackState == NAudio.Wave.PlaybackState.Paused;
@@ -109,6 +111,17 @@ public class NAudioPlaybackService : IPlaybackService
         {
             stopwatch.Stop();
             Logger.Error(ex, $"Playback setup failed for song: {song.Title} after {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
+            
+            // Fire playback error event if we have a file path
+            if (song.SelectedStream != null)
+            {
+                var cachedPath = _cachingService?.GetCachedFilePath(song, song.SelectedStream);
+                if (!string.IsNullOrEmpty(cachedPath) && File.Exists(cachedPath))
+                {
+                    PlaybackError?.Invoke(this, new PlaybackErrorEventArgs(cachedPath, ex, song));
+                }
+            }
+            
             throw;
         }
     }
@@ -199,6 +212,17 @@ public class NAudioPlaybackService : IPlaybackService
         {
             stopwatch.Stop();
             Logger.Error(ex, $"Playback failed for stream: {streamInfo} after {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
+            
+            // Fire playback error event if we have a file path
+            if (song != null)
+            {
+                var cachedPath = _cachingService?.GetCachedFilePath(song, streamInfo);
+                if (!string.IsNullOrEmpty(cachedPath) && File.Exists(cachedPath))
+                {
+                    PlaybackError?.Invoke(this, new PlaybackErrorEventArgs(cachedPath, ex, song));
+                }
+            }
+            
             throw;
         }
     }
@@ -266,6 +290,10 @@ public class NAudioPlaybackService : IPlaybackService
         {
             stopwatch.Stop();
             Logger.Error(ex, $"Failed to play file: {filePath} after {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
+            
+            // Fire playback error event
+            PlaybackError?.Invoke(this, new PlaybackErrorEventArgs(filePath, ex));
+            
             throw;
         }
     }

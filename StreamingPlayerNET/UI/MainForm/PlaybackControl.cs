@@ -5,6 +5,7 @@ using StreamingPlayerNET.Services;
 using NLog;
 using Humanizer;
 using static StreamingPlayerNET.Common.Models.PlaybackState;
+using System.Windows.Forms;
 
 namespace StreamingPlayerNET.UI;
 
@@ -433,5 +434,52 @@ public partial class MainForm
         volumeLabel.Text = $"{volumePercentage}%";
         
         Logger.Debug($"Volume changed to: {volumePercentage}%");
+    }
+    
+    private void OnPlaybackError(object? sender, PlaybackErrorEventArgs e)
+    {
+        if (InvokeRequired)
+        {
+            SafeInvoke(() => OnPlaybackError(sender, e));
+            return;
+        }
+        
+        Logger.Warn($"Playback error occurred for file: {e.FilePath}");
+        Logger.Warn($"Error details: {e.Exception.Message}");
+        
+        var fileName = Path.GetFileName(e.FilePath);
+        var songTitle = e.Song?.Title ?? fileName;
+        
+        var message = $"Failed to play '{songTitle}' in the music player.\n\n" +
+                     $"Error: {e.Exception.Message}\n\n" +
+                     $"The file may be in an unsupported format or corrupted.\n\n" +
+                     $"Would you like to open this file in its associated application instead?";
+        
+        var result = MessageBox.Show(message, "Playback Error", 
+            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        
+        if (result == DialogResult.Yes)
+        {
+            try
+            {
+                var fileAssociationService = new FileAssociationService();
+                var success = fileAssociationService.OpenFileInAssociatedApp(e.FilePath, true);
+                
+                if (success)
+                {
+                    Logger.Info($"Successfully opened file in associated application: {e.FilePath}");
+                }
+                else
+                {
+                    Logger.Warn($"Failed to open file in associated application: {e.FilePath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Exception occurred while trying to open file in associated application: {e.FilePath}");
+                MessageBox.Show($"Failed to open file in associated application: {ex.Message}", 
+                    "File Open Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }

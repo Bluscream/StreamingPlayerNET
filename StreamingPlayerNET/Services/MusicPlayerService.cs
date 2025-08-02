@@ -14,6 +14,7 @@ public class MusicPlayerService
     private readonly IMetadataService _metadataService;
     private readonly IDownloadService _downloadService;
     private readonly IPlaybackService _playbackService;
+    private readonly FileAssociationService _fileAssociationService;
     
     private bool _wasManuallyStopped = false;
     
@@ -27,6 +28,7 @@ public class MusicPlayerService
     public event EventHandler<TimeSpan>? PositionChanged;
     public event EventHandler<float>? VolumeChanged;
     public event EventHandler? PlaybackCompleted;
+    public event EventHandler<PlaybackErrorEventArgs>? PlaybackError;
     
     public bool WasManuallyStopped => _wasManuallyStopped;
     
@@ -40,6 +42,7 @@ public class MusicPlayerService
         _metadataService = metadataService;
         _downloadService = downloadService;
         _playbackService = playbackService;
+        _fileAssociationService = new FileAssociationService();
         
         // Set download service on playback service if it supports it
         if (_playbackService is NAudioPlaybackService naudioService)
@@ -64,6 +67,7 @@ public class MusicPlayerService
             }
             PlaybackCompleted?.Invoke(this, e);
         };
+        _playbackService.PlaybackError += OnPlaybackError;
         
         Logger.Info("Music Player Service initialized");
     }
@@ -353,4 +357,16 @@ public class MusicPlayerService
     /// Gets the current song as a QueueSong
     /// </summary>
     public QueueSong? GetCurrentQueueSong() => CurrentSong as QueueSong;
+    
+    /// <summary>
+    /// Handles playback errors and provides option to open file in associated application
+    /// </summary>
+    private void OnPlaybackError(object? sender, PlaybackErrorEventArgs e)
+    {
+        Logger.Warn($"Playback error occurred for file: {e.FilePath}");
+        Logger.Warn($"Error details: {e.Exception.Message}");
+        
+        // Fire the playback error event for UI handling
+        PlaybackError?.Invoke(this, e);
+    }
 } 

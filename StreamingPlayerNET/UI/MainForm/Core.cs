@@ -102,6 +102,7 @@ public partial class MainForm
             _musicPlayerService.PositionChanged += OnPositionChanged;
             _musicPlayerService.VolumeChanged += OnVolumeChanged;
             _musicPlayerService.PlaybackCompleted += OnPlaybackCompleted;
+            _musicPlayerService.PlaybackError += OnPlaybackError;
             
             // Wire up caching service events for downloads tracking
             var cachingService = _playbackService?.GetCachingService();

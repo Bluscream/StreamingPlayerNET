@@ -7,6 +7,7 @@ public interface IPlaybackService
     event EventHandler<PlaybackState>? PlaybackStateChanged;
     event EventHandler<TimeSpan>? PositionChanged;
     event EventHandler? PlaybackCompleted;
+    event EventHandler<PlaybackErrorEventArgs>? PlaybackError;
     
     Task PlayAsync(Song song, CancellationToken cancellationToken = default);
     Task PlayAsync(AudioStreamInfo streamInfo, CancellationToken cancellationToken = default);
@@ -29,4 +30,18 @@ public interface IPlaybackService
     bool IsStopped { get; }
     
     CachingService? GetCachingService();
+}
+
+public class PlaybackErrorEventArgs : EventArgs
+{
+    public string FilePath { get; }
+    public Exception Exception { get; }
+    public Song? Song { get; }
+    
+    public PlaybackErrorEventArgs(string filePath, Exception exception, Song? song = null)
+    {
+        FilePath = filePath;
+        Exception = exception;
+        Song = song;
+    }
 } 

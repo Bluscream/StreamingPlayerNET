@@ -418,4 +418,20 @@ public partial class MainForm
             Logger.Error(ex, "Error showing track change notification");
         }
     }
+    
+    private void OnVolumeChanged(object? sender, float volume)
+    {
+        if (InvokeRequired)
+        {
+            SafeInvoke(() => OnVolumeChanged(sender, volume));
+            return;
+        }
+        
+        // Update volume track bar and label
+        var volumePercentage = (int)(volume * 100);
+        volumeTrackBar.Value = Math.Max(0, Math.Min(100, volumePercentage));
+        volumeLabel.Text = $"{volumePercentage}%";
+        
+        Logger.Debug($"Volume changed to: {volumePercentage}%");
+    }
 }

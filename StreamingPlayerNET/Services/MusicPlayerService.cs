@@ -24,6 +24,7 @@ public class MusicPlayerService
     public event EventHandler<Song>? SongChanged;
     public event EventHandler<PlaybackState>? PlaybackStateChanged;
     public event EventHandler<TimeSpan>? PositionChanged;
+    public event EventHandler<float>? VolumeChanged;
     public event EventHandler? PlaybackCompleted;
     
     public bool WasManuallyStopped => _wasManuallyStopped;
@@ -301,11 +302,15 @@ public class MusicPlayerService
     
     public void SetVolume(float volume)
     {
+        Logger.Debug($"Setting volume to: {volume:P0}");
         _playbackService.SetVolume(volume);
         if (_currentSong != null)
         {
             _currentSong.Volume = volume;
         }
+        
+        // Fire volume changed event
+        VolumeChanged?.Invoke(this, volume);
     }
     
     public void SetPosition(TimeSpan position)

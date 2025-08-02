@@ -249,10 +249,19 @@ public class CachingService
                             {
                                 if (_downloadInfos.TryGetValue(cacheKey, out var info))
                                 {
-                                                                               info.Status = "Downloading";
-                                           info.BytesDownloaded = e.BytesReceived;
-                                           info.TotalBytes = e.TotalBytes;
-                                    DownloadProgressChanged?.Invoke(this, e);
+                                    info.Status = "Downloading";
+                                    info.BytesDownloaded = e.BytesReceived;
+                                    info.TotalBytes = e.TotalBytes;
+                                    
+                                    // Create a new progress event that includes the cache key in the song title
+                                    // This allows the UI to match the progress to the correct download
+                                    var progressEvent = new DownloadProgressEventArgs(
+                                        $"{e.SongTitle}|{cacheKey}", 
+                                        e.BytesReceived, 
+                                        e.TotalBytes, 
+                                        e.Status
+                                    );
+                                    DownloadProgressChanged?.Invoke(this, progressEvent);
                                 }
                             }
                         };

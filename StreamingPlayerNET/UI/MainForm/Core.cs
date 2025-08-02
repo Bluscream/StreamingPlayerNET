@@ -16,10 +16,7 @@ public partial class MainForm
         
         try
         {
-            // Initialize configuration service first
-            _configService = new ConfigurationService();
-            
-            // LogService is already initialized in the constructor
+            // ConfigurationService and LogService are already initialized in the constructor
             
             // Initialize individual services
             // Create and register source providers

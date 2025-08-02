@@ -37,13 +37,14 @@ public partial class MainForm : Form
     // Data binding properties for the different views
     // Note: Using manual ListView population instead of data binding for better control
     
-    public MainForm(LogService? logService = null)
+    public MainForm(LogService? logService = null, ConfigurationService? configService = null)
     {
         Logger.Info("=== Simple Music Player .NET Starting ===");
         Logger.Debug("Initializing MainForm components");
         
-        // Use the provided LogService or create a new one if none provided
-        _logService = logService ?? new LogService();
+        // Use the provided services or create new ones if none provided
+        _logService = logService ?? new LogService(configService);
+        _configService = configService ?? new ConfigurationService();
         
         InitializeComponent();
         Logger.Debug("Form components initialized successfully");

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using NLog;
+using StreamingPlayerNET.Common.Models;
 
 namespace StreamingPlayerNET.Services;
 
@@ -9,13 +10,16 @@ public class LogService
     private readonly ConcurrentQueue<LogEntry> _logEntries = new();
     private readonly int _maxEntries = 100;
     private bool _isSetupComplete = false;
+    private ConfigurationService? _configService;
 
     
     public event EventHandler<LogEntry>? LogEntryAdded;
     public event EventHandler<string>? StatusUpdateRequested;
     
-    public LogService()
+    public LogService(ConfigurationService? configService = null)
     {
+        _configService = configService;
+        
         // Subscribe to NLog events
         LogManager.ConfigurationChanged += OnConfigurationChanged;
         
@@ -54,7 +58,7 @@ public class LogService
             config.AddTarget("logCapture", logCaptureTarget);
             
             // Add rule to capture all log entries
-            var newRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, logCaptureTarget);
+            var newRule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Trace, logCaptureTarget);
             config.LoggingRules.Add(newRule);
             
             // Apply the configuration
@@ -80,19 +84,61 @@ public class LogService
         }
     }
     
-    public void AddLogEntry(LogEntry entry)
+    private bool ShouldDisplayLogEntry(LogEntry entry)
     {
-        _logEntries.Enqueue(entry);
+        // If no config service, show all entries
+        if (_configService == null)
+            return true;
+            
+        var config = ConfigurationService.Current;
+        if (config == null)
+            return true;
         
-        // Keep only the last maxEntries
-        while (_logEntries.Count > _maxEntries)
+        // Check if debug mode is enabled
+        if (config.EnableDebugMode)
         {
-            _logEntries.TryDequeue(out _);
+            // In debug mode, show all log levels
+            return true;
         }
         
-        LogEntryAdded?.Invoke(this, entry);
+        // Check log level setting
+        var minLogLevel = config.LogLevel;
+        var entryLogLevel = ConvertToLogLevel(entry.Level);
         
-        // Update status label if this is an error with an exception
+        return entryLogLevel >= minLogLevel;
+    }
+    
+    private StreamingPlayerNET.Common.Models.LogLevel ConvertToLogLevel(NLog.LogLevel nlogLevel)
+    {
+        return nlogLevel.Name.ToUpper() switch
+        {
+            "TRACE" => StreamingPlayerNET.Common.Models.LogLevel.Trace,
+            "DEBUG" => StreamingPlayerNET.Common.Models.LogLevel.Debug,
+            "INFO" => StreamingPlayerNET.Common.Models.LogLevel.Info,
+            "WARN" => StreamingPlayerNET.Common.Models.LogLevel.Warning,
+            "ERROR" => StreamingPlayerNET.Common.Models.LogLevel.Error,
+            "FATAL" => StreamingPlayerNET.Common.Models.LogLevel.Fatal,
+            _ => StreamingPlayerNET.Common.Models.LogLevel.Info
+        };
+    }
+    
+    public void AddLogEntry(LogEntry entry)
+    {
+        // Only add to the queue if it should be displayed based on configuration
+        if (ShouldDisplayLogEntry(entry))
+        {
+            _logEntries.Enqueue(entry);
+            
+            // Keep only the last maxEntries
+            while (_logEntries.Count > _maxEntries)
+            {
+                _logEntries.TryDequeue(out _);
+            }
+            
+            LogEntryAdded?.Invoke(this, entry);
+        }
+        
+        // Always update status label if this is an error with an exception
         if (entry.Level == NLog.LogLevel.Error && !string.IsNullOrEmpty(entry.Exception))
         {
             var exceptionType = GetExceptionType(entry.Exception);

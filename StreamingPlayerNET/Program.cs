@@ -8,6 +8,7 @@ static class Program
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private static LogService? _logService;
+    private static ConfigurationService? _configService;
     
     /// <summary>
     ///  The main entry point for the application.
@@ -28,8 +29,11 @@ static class Program
             // Initialize NLog
             LogManager.Setup().LoadConfigurationFromFile("NLog.config");
             
-            // Initialize LogService immediately after NLog configuration to capture all logs
-            _logService = new LogService();
+            // Initialize configuration service first
+            _configService = new ConfigurationService();
+            
+            // Initialize LogService with configuration service to respect debug settings
+            _logService = new LogService(_configService);
             
             Logger.Info("=== StreamingPlayerNET Application Starting ===");
             Logger.Info($"Operating System: {Environment.OSVersion}");
@@ -42,7 +46,7 @@ static class Program
             Logger.Debug("Application configuration initialized");
             
             Logger.Info("Starting main application form");
-            Application.Run(new MainForm(_logService));
+            Application.Run(new MainForm(_logService, _configService));
             
             Logger.Info("Application form closed, main thread ending");
         }

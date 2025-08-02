@@ -269,36 +269,72 @@ public partial class MainForm
         
         try
         {
-            // Find the download by song title (since we don't have cache key in the progress event)
-            // Try to find the most recent download with this title that's still downloading
-            var download = _downloads
-                .Where(d => d.Title == e.SongTitle && d.Status != "Completed" && d.Status != "Failed")
-                .OrderByDescending(d => d.StartTime)
-                .FirstOrDefault();
+            // Parse the song title to extract the cache key if present
+            string songTitle = e.SongTitle;
+            string? cacheKey = null;
+            
+            if (e.SongTitle.Contains("|"))
+            {
+                var parts = e.SongTitle.Split('|', 2);
+                songTitle = parts[0];
+                cacheKey = parts[1];
+            }
+            
+            // Try to find the download by cache key first (most reliable)
+            DownloadInfo? download = null;
+            if (!string.IsNullOrEmpty(cacheKey))
+            {
+                download = _downloads.FirstOrDefault(d => d.CacheKey == cacheKey);
+            }
+            
+            // Fallback to finding by song title if cache key matching failed
+            if (download == null)
+            {
+                var matchingDownloads = _downloads
+                    .Where(d => d.Title == songTitle && d.Status != "Completed" && d.Status != "Failed")
+                    .OrderByDescending(d => d.StartTime)
+                    .ToList();
+                    
+                if (matchingDownloads.Count > 0)
+                {
+                    // If multiple downloads match, try to find the one that's most likely to be the current one
+                    // by checking if it has any progress already or if it's the most recent
+                    download = matchingDownloads.FirstOrDefault(d => d.BytesDownloaded > 0) ?? matchingDownloads.First();
+                }
+            }
                 
             if (download != null)
             {
-                download.BytesDownloaded = e.BytesReceived;
-                download.TotalBytes = e.TotalBytes;
-                download.Status = "Downloading";
-                
-                // Calculate estimated time remaining
-                if (e.BytesReceived > 0 && e.TotalBytes > 0)
+                // Only update if this download doesn't already have more progress (to avoid overwriting with older progress)
+                if (download.BytesDownloaded <= e.BytesReceived || download.TotalBytes == 0)
                 {
-                    var elapsed = DateTime.Now - download.StartTime;
-                    var bytesPerSecond = e.BytesReceived / elapsed.TotalSeconds;
-                    if (bytesPerSecond > 0)
+                    download.BytesDownloaded = e.BytesReceived;
+                    download.TotalBytes = e.TotalBytes;
+                    download.Status = "Downloading";
+                    
+                    // Calculate estimated time remaining
+                    if (e.BytesReceived > 0 && e.TotalBytes > 0)
                     {
-                        var remainingBytes = e.TotalBytes - e.BytesReceived;
-                        download.EstimatedTimeRemaining = TimeSpan.FromSeconds(remainingBytes / bytesPerSecond);
+                        var elapsed = DateTime.Now - download.StartTime;
+                        var bytesPerSecond = e.BytesReceived / elapsed.TotalSeconds;
+                        if (bytesPerSecond > 0)
+                        {
+                            var remainingBytes = e.TotalBytes - e.BytesReceived;
+                            download.EstimatedTimeRemaining = TimeSpan.FromSeconds(remainingBytes / bytesPerSecond);
+                        }
                     }
+                    
+                    Logger.Debug($"Updated progress for {download.Title}: {e.BytesReceived}/{e.TotalBytes} bytes ({e.BytesReceived * 100.0 / e.TotalBytes:F1}%)");
+                    UpdateDownloadsDisplay();
                 }
-                
-                UpdateDownloadsDisplay();
+                else
+                {
+                    Logger.Debug($"Skipped progress update for {download.Title} - already has more progress ({download.BytesDownloaded}/{download.TotalBytes} vs {e.BytesReceived}/{e.TotalBytes})");
+                }
             }
             else
             {
-                Logger.Debug($"Could not find download for progress update: {e.SongTitle}");
+                Logger.Debug($"Could not find download for progress update: {songTitle} (CacheKey: {cacheKey})");
             }
         }
         catch (Exception ex)

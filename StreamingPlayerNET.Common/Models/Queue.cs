@@ -87,7 +87,9 @@ public class Queue : Playlist
     
     public new void AddSong(Song song)
     {
-        Songs.Add(song);
+        // Convert Song to QueueSong if it's not already a QueueSong
+        var queueSong = song is QueueSong ? (QueueSong)song : QueueSong.FromSong(song);
+        Songs.Add(queueSong);
         if (_shuffleEnabled)
         {
             UpdateShuffleOrder();
@@ -99,7 +101,9 @@ public class Queue : Playlist
     {
         foreach (var song in songs)
         {
-            Songs.Add(song);
+            // Convert Song to QueueSong if it's not already a QueueSong
+            var queueSong = song is QueueSong ? (QueueSong)song : QueueSong.FromSong(song);
+            Songs.Add(queueSong);
         }
         if (_shuffleEnabled)
         {
@@ -112,7 +116,9 @@ public class Queue : Playlist
     {
         if (index >= 0 && index <= Songs.Count)
         {
-            Songs.Insert(index, song);
+            // Convert Song to QueueSong if it's not already a QueueSong
+            var queueSong = song is QueueSong ? (QueueSong)song : QueueSong.FromSong(song);
+            Songs.Insert(index, queueSong);
             if (_currentIndex >= index)
             {
                 _currentIndex++;
@@ -397,5 +403,64 @@ public class Queue : Playlist
     public string GetShuffleText()
     {
         return ShuffleEnabled ? "Shuffle On" : "Shuffle Off";
+    }
+    
+    /// <summary>
+    /// Gets the current song as a QueueSong
+    /// </summary>
+    public QueueSong? CurrentQueueSong => CurrentSong as QueueSong;
+    
+    /// <summary>
+    /// Gets the next song as a QueueSong
+    /// </summary>
+    public QueueSong? NextQueueSong => NextSong as QueueSong;
+    
+    /// <summary>
+    /// Gets the previous song as a QueueSong
+    /// </summary>
+    public QueueSong? PreviousQueueSong => PreviousSong as QueueSong;
+    
+    /// <summary>
+    /// Saves the current position of the current song
+    /// </summary>
+    public void SaveCurrentSongPosition()
+    {
+        if (CurrentQueueSong != null)
+        {
+            CurrentQueueSong.SaveCurrentPosition();
+        }
+    }
+    
+    /// <summary>
+    /// Restores the saved position of the current song
+    /// </summary>
+    public void RestoreCurrentSongPosition()
+    {
+        if (CurrentQueueSong != null)
+        {
+            CurrentQueueSong.RestorePosition();
+        }
+    }
+    
+    /// <summary>
+    /// Records the start of playback for the current song
+    /// </summary>
+    public void RecordCurrentSongPlaybackStart()
+    {
+        if (CurrentQueueSong != null)
+        {
+            CurrentQueueSong.RecordPlaybackStart();
+        }
+    }
+    
+    /// <summary>
+    /// Records the pause/stop of playback for the current song
+    /// </summary>
+    public void RecordCurrentSongPlaybackPause()
+    {
+        if (CurrentQueueSong != null)
+        {
+            CurrentQueueSong.RecordPlaybackPause();
+        }
     }
 }

@@ -32,7 +32,9 @@ public class QueueCacheService
             // Create queue cache data
             var queueCache = new QueueCacheData
             {
-                Songs = queue.Songs.Take(config.MaxCachedQueueSize).ToList(),
+                Songs = queue.Songs.Take(config.MaxCachedQueueSize)
+                    .Select(s => s is QueueSong ? (QueueSong)s : QueueSong.FromSong(s))
+                    .ToList(),
                 CurrentIndex = queue.CurrentIndex,
                 RepeatMode = queue.RepeatMode,
                 ShuffleEnabled = queue.ShuffleEnabled,
@@ -113,7 +115,7 @@ public class QueueCacheService
 
 public class QueueCacheData
 {
-    public List<Song> Songs { get; set; } = new();
+    public List<QueueSong> Songs { get; set; } = new();
     public int CurrentIndex { get; set; } = -1;
     public RepeatMode RepeatMode { get; set; } = RepeatMode.None;
     public bool ShuffleEnabled { get; set; } = false;

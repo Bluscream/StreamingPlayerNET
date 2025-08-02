@@ -88,6 +88,12 @@ public class MusicPlayerService
             song.StartSongTimer();
             song.State = PlaybackState.Loading;
             
+            // If it's a QueueSong, record playback start
+            if (song is QueueSong queueSong)
+            {
+                queueSong.RecordPlaybackStart();
+            }
+            
             // Step 1: Get metadata if not already available
             if (string.IsNullOrEmpty(song.Title) || song.SelectedStream == null)
             {
@@ -228,6 +234,12 @@ public class MusicPlayerService
             _currentSong.State = PlaybackState.Paused;
             var pauseTime = _currentSong.GetCurrentSongTime();
             Logger.Info($"Song paused at {pauseTime?.TotalMilliseconds.Milliseconds()} into the process");
+            
+            // If it's a QueueSong, save the current position
+            if (_currentSong is QueueSong queueSong)
+            {
+                queueSong.RecordPlaybackPause();
+            }
         }
     }
     
@@ -240,6 +252,12 @@ public class MusicPlayerService
             _currentSong.State = PlaybackState.Playing;
             var resumeTime = _currentSong.GetCurrentSongTime();
             Logger.Info($"Song resumed at {resumeTime?.TotalMilliseconds.Milliseconds()} into the process");
+            
+            // If it's a QueueSong, record playback start
+            if (_currentSong is QueueSong queueSong)
+            {
+                queueSong.RecordPlaybackStart();
+            }
         }
     }
     
@@ -254,6 +272,12 @@ public class MusicPlayerService
             _currentSong.StopSongTimer();
             var stopTime = _currentSong.GetCurrentSongTime();
             Logger.Info($"Song stopped after {stopTime?.TotalMilliseconds.Milliseconds()} - process terminated early");
+            
+            // If it's a QueueSong, save the current position for later resumption
+            if (_currentSong is QueueSong queueSong)
+            {
+                queueSong.SaveCurrentPosition();
+            }
         }
     }
     
@@ -286,4 +310,26 @@ public class MusicPlayerService
     public bool IsPlaying => _playbackService.IsPlaying;
     public bool IsPaused => _playbackService.IsPaused;
     public bool IsStopped => _playbackService.IsStopped;
+    
+    /// <summary>
+    /// Plays a QueueSong with position restoration if available
+    /// </summary>
+    public async Task PlayQueueSongAsync(QueueSong queueSong, CancellationToken cancellationToken = default)
+    {
+        Logger.Info($"Playing QueueSong: {queueSong.Title} (Saved position: {queueSong.SavedPosition})");
+        
+        // If there's a saved position and the song was playing, restore it
+        if (queueSong.WasPlaying && queueSong.SavedPosition > TimeSpan.Zero)
+        {
+            Logger.Info($"Restoring playback position to {queueSong.SavedPosition}");
+            queueSong.RestorePosition();
+        }
+        
+        await PlaySongAsync(queueSong, cancellationToken);
+    }
+    
+    /// <summary>
+    /// Gets the current song as a QueueSong
+    /// </summary>
+    public QueueSong? GetCurrentQueueSong() => _currentSong as QueueSong;
 } 

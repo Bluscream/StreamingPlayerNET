@@ -333,7 +333,6 @@ public class MusicPlayerService
     public PlaybackState GetPlaybackState() => _playbackService.GetPlaybackState();
     public TimeSpan GetCurrentPosition() => _playbackService.GetCurrentPosition();
     public TimeSpan? GetTotalDuration() => _playbackService.GetTotalDuration();
-    public float GetVolume() => _playbackService.GetVolume();
     public bool IsPlaying => _playbackService.IsPlaying;
     public bool IsPaused => _playbackService.IsPaused;
     public bool IsStopped => _playbackService.IsStopped;

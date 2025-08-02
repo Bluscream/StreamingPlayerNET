@@ -208,13 +208,20 @@ public partial class MainForm
 
     private void SafeInvoke(Action action)
     {
+        var invokeId = Guid.NewGuid().ToString("N")[..6];
+        Logger.Debug($"[SafeInvoke-{invokeId}] SafeInvoke called, InvokeRequired: {InvokeRequired}, Thread: {Thread.CurrentThread.ManagedThreadId}");
+        
         if (InvokeRequired)
         {
+            Logger.Debug($"[SafeInvoke-{invokeId}] Marshalling to UI thread via Invoke");
             Invoke(action);
+            Logger.Debug($"[SafeInvoke-{invokeId}] Invoke completed");
         }
         else
         {
+            Logger.Debug($"[SafeInvoke-{invokeId}] Executing directly on current thread");
             action();
+            Logger.Debug($"[SafeInvoke-{invokeId}] Direct execution completed");
         }
     }
 

@@ -210,13 +210,27 @@ public partial class MainForm
 
     private async Task OnSearchResultDoubleClick()
     {
+        var clickId = Guid.NewGuid().ToString("N")[..8];
+        Logger.Info($"[SearchClick-{clickId}] *** SEARCH RESULT DOUBLE-CLICKED, Thread: {Thread.CurrentThread.ManagedThreadId}");
+        
         if (searchListView.SelectedItems.Count > 0)
         {
             var selectedItem = searchListView.SelectedItems[0];
             if (selectedItem.Tag is Song song)
             {
+                Logger.Info($"[SearchClick-{clickId}] Selected song from search: {song.Title} by {song.Artist}");
+                Logger.Debug($"[SearchClick-{clickId}] About to call PlaySong, Thread: {Thread.CurrentThread.ManagedThreadId}");
                 await PlaySong(song);
+                Logger.Debug($"[SearchClick-{clickId}] PlaySong call completed");
             }
+            else
+            {
+                Logger.Warn($"[SearchClick-{clickId}] Selected item has no song tag");
+            }
+        }
+        else
+        {
+            Logger.Warn($"[SearchClick-{clickId}] No items selected in search");
         }
     }
 

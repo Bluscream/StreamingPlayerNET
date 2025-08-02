@@ -21,13 +21,17 @@ public partial class MainForm
             Logger.Info($"[Play-{playId}] Loading: {song.Title}...");
             
             // Ensure queue operations happen on UI thread
+            Logger.Debug($"[Play-{playId}] About to execute SafeInvoke for queue operations, Thread: {Thread.CurrentThread.ManagedThreadId}");
             SafeInvoke(() =>
             {
+                Logger.Debug($"[Play-{playId}] Inside SafeInvoke callback, Thread: {Thread.CurrentThread.ManagedThreadId}");
+                
                 // Add song to queue if not already there
                 if (!_queue.Songs.Contains(song))
                 {
                     Logger.Debug($"[Play-{playId}] Adding song to queue: {song.Title}");
                     _queue.AddSong(song);
+                    Logger.Debug($"[Play-{playId}] Song added to queue successfully");
                 }
                 else
                 {
@@ -41,22 +45,29 @@ public partial class MainForm
                 {
                     Logger.Debug($"[Play-{playId}] Moving queue to index {songIndex}");
                     _queue.MoveToIndex(songIndex);
+                    Logger.Debug($"[Play-{playId}] Queue moved to index {songIndex}");
                 }
                 
                 // Start progress timer for loading state
+                Logger.Debug($"[Play-{playId}] Starting progress timer");
                 _progressTimer?.Start();
+                Logger.Debug($"[Play-{playId}] Progress timer started");
             });
+            Logger.Debug($"[Play-{playId}] SafeInvoke completed, Thread: {Thread.CurrentThread.ManagedThreadId}");
             
-            Logger.Info($"[Play-{playId}] Calling MusicPlayerService.PlaySongAsync for: {song.Title}");
+            Logger.Info($"[Play-{playId}] About to call MusicPlayerService.PlaySongAsync for: {song.Title}, Thread: {Thread.CurrentThread.ManagedThreadId}");
             await _musicPlayerService.PlaySongAsync(song);
+            Logger.Info($"[Play-{playId}] MusicPlayerService.PlaySongAsync completed successfully");
             
             Logger.Info($"[Play-{playId}] *** SUCCESSFULLY STARTED PLAYING: {song.Title}");
         }
         catch (Exception ex)
         {
             Logger.Error(ex, $"[Play-{playId}] *** FAILED TO PLAY SONG: {song.Title}");
+            Logger.Debug($"[Play-{playId}] About to show error message via SafeInvoke");
             SafeInvoke(() => MessageBox.Show($"Failed to play song: {ex.Message}\n\nTry selecting a different song.", "Playback Error", 
                 MessageBoxButtons.OK, MessageBoxIcon.Warning));
+            Logger.Debug($"[Play-{playId}] Error message SafeInvoke completed");
         }
     }
 

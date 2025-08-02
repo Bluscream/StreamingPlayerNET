@@ -86,11 +86,13 @@ public class MusicPlayerService
     
     public async Task PlaySongAsync(Song song, CancellationToken cancellationToken = default)
     {
-        Logger.Info($"Starting complete playback process for: {song.Title}");
+        var playId = Guid.NewGuid().ToString("N")[..8];
+        Logger.Info($"[MusicPlayer-{playId}] Starting complete playback process for: {song.Title}, Thread: {Thread.CurrentThread.ManagedThreadId}");
         
         try
         {
             // Start the song timer at the very beginning
+            Logger.Debug($"[MusicPlayer-{playId}] Starting song timer");
             song.StartSongTimer();
             if (song is QueueSong queueSongForState)
             {
@@ -106,10 +108,12 @@ public class MusicPlayerService
             // Step 1: Get metadata if not already available
             if (string.IsNullOrEmpty(song.Title) || song.SelectedStream == null)
             {
-                Logger.Info("Step 1: Getting song metadata and audio streams");
+                Logger.Info($"[MusicPlayer-{playId}] Step 1: Getting song metadata and audio streams");
                 var metadataStartTime = song.GetCurrentSongTime();
                 
+                Logger.Debug($"[MusicPlayer-{playId}] About to call _metadataService.GetSongMetadataAsync");
                 var metadata = await _metadataService.GetSongMetadataAsync(song.Id, cancellationToken);
+                Logger.Debug($"[MusicPlayer-{playId}] _metadataService.GetSongMetadataAsync completed");
                 
                 // Update song with metadata
                 song.Title = metadata.Title;
@@ -123,33 +127,37 @@ public class MusicPlayerService
                 
                 var metadataEndTime = song.GetCurrentSongTime();
                 var metadataDuration = metadataEndTime - metadataStartTime;
-                Logger.Info($"Metadata retrieval completed in {metadataDuration?.TotalMilliseconds.Milliseconds()}");
+                Logger.Info($"[MusicPlayer-{playId}] Metadata retrieval completed in {metadataDuration?.TotalMilliseconds.Milliseconds()}");
                 
                 // Get best audio stream
-                Logger.Info("Step 2: Getting best audio stream");
+                Logger.Info($"[MusicPlayer-{playId}] Step 2: Getting best audio stream");
                 var streamStartTime = song.GetCurrentSongTime();
                 
+                Logger.Debug($"[MusicPlayer-{playId}] About to call _metadataService.GetBestAudioStreamAsync");
                 song.SelectedStream = await _metadataService.GetBestAudioStreamAsync(song.Id, cancellationToken);
+                Logger.Debug($"[MusicPlayer-{playId}] _metadataService.GetBestAudioStreamAsync completed");
                 
                 var streamEndTime = song.GetCurrentSongTime();
                 var streamDuration = streamEndTime - streamStartTime;
-                Logger.Info($"Audio stream selection completed in {streamDuration?.TotalMilliseconds.Milliseconds()}");
-                Logger.Info($"Selected audio stream: {song.SelectedStream}");
+                Logger.Info($"[MusicPlayer-{playId}] Audio stream selection completed in {streamDuration?.TotalMilliseconds.Milliseconds()}");
+                Logger.Info($"[MusicPlayer-{playId}] Selected audio stream: {song.SelectedStream}");
             }
             else
             {
-                Logger.Info("Metadata and audio stream already available, skipping retrieval");
+                Logger.Info($"[MusicPlayer-{playId}] Metadata and audio stream already available, skipping retrieval");
             }
             
             // Step 3: Start playback
-            Logger.Info("Step 3: Starting audio playback");
+            Logger.Info($"[MusicPlayer-{playId}] Step 3: Starting audio playback");
             var playbackStartTime = song.GetCurrentSongTime();
             
+            Logger.Debug($"[MusicPlayer-{playId}] About to call _playbackService.PlayAsync");
             await _playbackService.PlayAsync(song, cancellationToken);
+            Logger.Debug($"[MusicPlayer-{playId}] _playbackService.PlayAsync completed");
             
             var playbackEndTime = song.GetCurrentSongTime();
             var playbackSetupDuration = playbackEndTime - playbackStartTime;
-            Logger.Info($"Audio playback setup completed in {playbackSetupDuration?.TotalMilliseconds.Milliseconds()}");
+            Logger.Info($"[MusicPlayer-{playId}] Audio playback setup completed in {playbackSetupDuration?.TotalMilliseconds.Milliseconds()}");
             
             CurrentSong = song;
             if (song is QueueSong queueSongForPlaying)
@@ -158,23 +166,24 @@ public class MusicPlayerService
             }
             _wasManuallyStopped = false; // Clear manual stop flag when starting new playback
             
-            Logger.Info($"*** FIRING SongChanged event for: {song.Title} by {song.Artist} on thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+            Logger.Info($"[MusicPlayer-{playId}] *** FIRING SongChanged event for: {song.Title} by {song.Artist} on thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
             SongChanged?.Invoke(this, song);
-            Logger.Debug($"*** SongChanged event completed");
+            Logger.Debug($"[MusicPlayer-{playId}] *** SongChanged event completed");
             
             var totalSetupTime = song.GetCurrentSongTime();
-            Logger.Info($"Complete playback setup process completed in {totalSetupTime?.TotalMilliseconds.Milliseconds()}");
-            Logger.Info($"Song '{song.Title}' is now playing - timer continues until playback ends");
+            Logger.Info($"[MusicPlayer-{playId}] Complete playback setup process completed in {totalSetupTime?.TotalMilliseconds.Milliseconds()}");
+            Logger.Info($"[MusicPlayer-{playId}] Song '{song.Title}' is now playing - timer continues until playback ends");
         }
         catch (Exception ex)
         {
+            Logger.Error(ex, $"[MusicPlayer-{playId}] Failed to play song: {song.Title}");
             if (song is QueueSong queueSongForError)
             {
                 queueSongForError.State = PlaybackState.Stopped;
             }
             song.StopSongTimer();
             var failedTime = song.GetCurrentSongTime();
-            Logger.Error(ex, $"Failed to play song: {song.Title} after {failedTime?.TotalMilliseconds.Milliseconds()}");
+            Logger.Error(ex, $"[MusicPlayer-{playId}] Failed to play song: {song.Title} after {failedTime?.TotalMilliseconds.Milliseconds()}");
             throw;
         }
     }

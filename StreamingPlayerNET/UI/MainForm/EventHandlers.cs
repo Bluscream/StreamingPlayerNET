@@ -40,16 +40,16 @@ public partial class MainForm
         };
         
         // Search tab events
-        searchListView.DoubleClick += async (s, e) => await OnSearchResultDoubleClick();
+        searchListView.DoubleClick += (s, e) => Task.Run(async () => await OnSearchResultDoubleClick());
         SetupSongContextMenu(SongContextMenuType.Search);
         
         // Queue tab events
-        queueListView.DoubleClick += async (s, e) => await OnQueueItemDoubleClick();
+        queueListView.DoubleClick += (s, e) => Task.Run(async () => await OnQueueItemDoubleClick());
         SetupSongContextMenu(SongContextMenuType.Queue);
         
         // Playlist tab events
         playlistsListBox.DoubleClick += (s, e) => OnPlaylistDoubleClick();
-        playlistListView.DoubleClick += async (s, e) => await OnPlaylistItemDoubleClick();
+        playlistListView.DoubleClick += (s, e) => Task.Run(async () => await OnPlaylistItemDoubleClick());
         SetupSongContextMenu(SongContextMenuType.Playlist);
         
 
@@ -277,14 +277,36 @@ public partial class MainForm
         
         if (IsHotkeyMatch(e, config.PreviousTrackHotkey))
         {
-            _ = PlayPreviousSong();
+            // Run on background thread to avoid blocking UI
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await PlayPreviousSong();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Failed to play previous song in background task");
+                }
+            });
             e.Handled = true;
             return;
         }
         
         if (IsHotkeyMatch(e, config.NextTrackHotkey))
         {
-            _ = PlayNextSong();
+            // Run on background thread to avoid blocking UI
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await PlayNextSong();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Failed to play next song in background task");
+                }
+            });
             e.Handled = true;
             return;
         }
@@ -383,16 +405,16 @@ public partial class MainForm
     private void SetupMenuEventHandlers()
     {
         // File menu
-        openFileMenuItem.Click += async (s, e) => await OpenLocalAudioFile();
-        reloadPlaylistsMenuItem.Click += async (s, e) => await ReloadPlaylists();
+        openFileMenuItem.Click += (s, e) => Task.Run(async () => await OpenLocalAudioFile());
+        reloadPlaylistsMenuItem.Click += (s, e) => Task.Run(async () => await ReloadPlaylists());
         exitMenuItem.Click += (s, e) => Close();
         
         // Playback menu
         playMenuItem.Click += (s, e) => OnPlayPauseButtonClick();
         pauseMenuItem.Click += (s, e) => OnPlayPauseButtonClick();
         stopMenuItem.Click += (s, e) => _musicPlayerService.Stop();
-        nextMenuItem.Click += async (s, e) => await PlayNextSong();
-        previousMenuItem.Click += async (s, e) => await PlayPreviousSong();
+        nextMenuItem.Click += (s, e) => Task.Run(async () => await PlayNextSong());
+        previousMenuItem.Click += (s, e) => Task.Run(async () => await PlayPreviousSong());
         volumeUpMenuItem.Click += (s, e) => AdjustVolume(10);
         volumeDownMenuItem.Click += (s, e) => AdjustVolume(-10);
         repeatMenuItem.Click += (s, e) => OnRepeatButtonClick();

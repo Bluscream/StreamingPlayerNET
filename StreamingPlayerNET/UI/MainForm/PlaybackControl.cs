@@ -74,7 +74,21 @@ public partial class MainForm
             var selectedItem = searchListView.SelectedItems[0];
             if (selectedItem.Tag is Song song)
             {
-                _ = PlaySong(song);
+                // Run on background thread to avoid blocking UI
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await PlaySong(song);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, "Failed to play song in background task");
+                        // Show error on UI thread
+                        SafeInvoke(() => MessageBox.Show($"Failed to play song: {ex.Message}", "Playback Error", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning));
+                    }
+                });
             }
         }
         else
@@ -238,7 +252,7 @@ public partial class MainForm
             if (repeatSong != null)
             {
                 Logger.Info($"[Completed-{completedId}] REPEATING current song: {repeatSong.Title}");
-                await PlaySong(repeatSong);
+                Task.Run(async () => await PlaySong(repeatSong));
                 return;
             }
         }
@@ -251,7 +265,7 @@ public partial class MainForm
             if (nextSong != null)
             {
                 Logger.Info($"[Completed-{completedId}] Next song: {nextSong.Title}");
-                await PlaySong(nextSong);
+                Task.Run(async () => await PlaySong(nextSong));
                 return;
             }
         }

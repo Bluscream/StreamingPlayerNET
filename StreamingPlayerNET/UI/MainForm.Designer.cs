@@ -120,6 +120,8 @@ partial class MainForm
     {
         menuStrip = new MenuStrip();
         fileMenu = new ToolStripMenuItem();
+        openFileMenuItem = new ToolStripMenuItem();
+        fileSeparator1 = new ToolStripSeparator();
         reloadPlaylistsMenuItem = new ToolStripMenuItem();
         exitMenuItem = new ToolStripMenuItem();
         playbackMenu = new ToolStripMenuItem();
@@ -240,7 +242,6 @@ partial class MainForm
         // 
         // openFileMenuItem
         // 
-        openFileMenuItem = new ToolStripMenuItem();
         openFileMenuItem.Name = "openFileMenuItem";
         openFileMenuItem.ShortcutKeys = Keys.Control | Keys.O;
         openFileMenuItem.Size = new Size(174, 22);
@@ -248,7 +249,6 @@ partial class MainForm
         // 
         // fileSeparator1
         // 
-        fileSeparator1 = new ToolStripSeparator();
         fileSeparator1.Name = "fileSeparator1";
         fileSeparator1.Size = new Size(171, 6);
         // 

@@ -11,6 +11,7 @@ public class CachingService
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly string _cacheBasePath;
     private readonly Dictionary<string, string> _fileCache = new();
+    private readonly Dictionary<string, Task<string>> _ongoingDownloads = new();
     private readonly object _cacheLock = new();
     private IDownloadService? _downloadService;
     
@@ -33,6 +34,33 @@ public class CachingService
     {
         _downloadService = downloadService;
         Logger.Debug("Download service set for CachingService");
+    }
+    
+    /// <summary>
+    /// Checks if a download is currently in progress for the given song
+    /// </summary>
+    public bool IsDownloadInProgress(Song song, AudioStreamInfo streamInfo)
+    {
+        if (song == null || streamInfo == null)
+            return false;
+            
+        var cacheKey = GenerateCacheKey(song, streamInfo);
+        
+        lock (_cacheLock)
+        {
+            return _ongoingDownloads.ContainsKey(cacheKey);
+        }
+    }
+    
+    /// <summary>
+    /// Gets the number of ongoing downloads
+    /// </summary>
+    public int GetOngoingDownloadCount()
+    {
+        lock (_cacheLock)
+        {
+            return _ongoingDownloads.Count;
+        }
     }
     
     /// <summary>
@@ -145,96 +173,132 @@ public class CachingService
             }
         }
         
+        // Check if download is already in progress
+        Task<string>? existingDownloadTask;
+        lock (_cacheLock)
+        {
+            if (_ongoingDownloads.TryGetValue(cacheKey, out existingDownloadTask))
+            {
+                Logger.Debug($"Download already in progress for song: {song.Title}, waiting for completion");
+            }
+        }
+        
+        // Wait for existing download outside of lock
+        if (existingDownloadTask != null)
+        {
+            return await existingDownloadTask;
+        }
+        
         var targetPath = GenerateTargetPath(song, streamInfo);
         
-        try
+        // Create the download task
+        var downloadTask = Task.Run(async () =>
         {
-            // Ensure target directory exists
-            var targetDir = Path.GetDirectoryName(targetPath);
-            if (!string.IsNullOrEmpty(targetDir))
+            try
             {
-                Directory.CreateDirectory(targetDir);
-            }
-            
-            string downloadedFilePath;
-            
-            if (_downloadService != null)
-            {
-                // Use the download service (with progress events)
-                Logger.Debug($"CachingService using download service for: {song.Title}");
-                downloadedFilePath = await _downloadService.DownloadAudioAsync(streamInfo, song.Title, cancellationToken);
-                
-                // Move the downloaded file to the cache location
-                if (File.Exists(downloadedFilePath))
+                // Ensure target directory exists
+                var targetDir = Path.GetDirectoryName(targetPath);
+                if (!string.IsNullOrEmpty(targetDir))
                 {
-                    if (downloadedFilePath != targetPath)
+                    Directory.CreateDirectory(targetDir);
+                }
+                
+                string downloadedFilePath;
+                
+                if (_downloadService != null)
+                {
+                    // Use the download service (with progress events)
+                    Logger.Debug($"CachingService using download service for: {song.Title}");
+                    downloadedFilePath = await _downloadService.DownloadAudioAsync(streamInfo, song.Title, cancellationToken);
+                    
+                    // Move the downloaded file to the cache location
+                    if (File.Exists(downloadedFilePath))
                     {
-                        File.Move(downloadedFilePath, targetPath, true);
+                        if (downloadedFilePath != targetPath)
+                        {
+                            File.Move(downloadedFilePath, targetPath, true);
+                        }
+                    }
+                    else
+                    {
+                        throw new IOException($"Download service did not create file: {downloadedFilePath}");
                     }
                 }
                 else
                 {
-                    throw new IOException($"Download service did not create file: {downloadedFilePath}");
+                    // Fallback to direct HTTP download (without progress events)
+                    Logger.Debug($"CachingService falling back to direct HTTP download: {song.Title} from {streamInfo.Url}");
+                    
+                    using var httpClient = new HttpClient();
+                    httpClient.Timeout = TimeSpan.FromMinutes(5); // 5 minute timeout for downloads
+                    
+                    using var response = await httpClient.GetAsync(streamInfo.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                    response.EnsureSuccessStatusCode();
+                    
+                    using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    using var fileStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    
+                    await contentStream.CopyToAsync(fileStream, cancellationToken);
+                    await fileStream.FlushAsync(cancellationToken);
                 }
-            }
-            else
-            {
-                // Fallback to direct HTTP download (without progress events)
-                Logger.Debug($"CachingService falling back to direct HTTP download: {song.Title} from {streamInfo.Url}");
                 
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromMinutes(5); // 5 minute timeout for downloads
-                
-                using var response = await httpClient.GetAsync(streamInfo.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-                response.EnsureSuccessStatusCode();
-                
-                using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                using var fileStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                
-                await contentStream.CopyToAsync(fileStream, cancellationToken);
-                await fileStream.FlushAsync(cancellationToken);
-            }
-            
-            // Verify the file was downloaded successfully
-            if (!File.Exists(targetPath))
-            {
-                throw new IOException($"Failed to download file to cache location: {targetPath}");
-            }
-            
-            var fileInfo = new FileInfo(targetPath);
-            if (fileInfo.Length == 0)
-            {
-                throw new IOException($"Downloaded file is empty: {targetPath}");
-            }
-            
-            // Add to cache dictionary
-            lock (_cacheLock)
-            {
-                _fileCache[cacheKey] = targetPath;
-            }
-            
-            Logger.Info($"Successfully downloaded and cached file: {song.Title} -> {targetPath} ({fileInfo.Length} bytes)");
-            return targetPath;
-        }
-        catch (Exception ex)
-        {
-            Logger.Error(ex, $"Failed to download and cache file for song: {song.Title}");
-            
-            // Clean up partial file if it exists
-            try
-            {
-                if (File.Exists(targetPath))
+                // Verify the file was downloaded successfully
+                if (!File.Exists(targetPath))
                 {
-                    File.Delete(targetPath);
+                    throw new IOException($"Failed to download file to cache location: {targetPath}");
+                }
+                
+                var fileInfo = new FileInfo(targetPath);
+                if (fileInfo.Length == 0)
+                {
+                    throw new IOException($"Downloaded file is empty: {targetPath}");
+                }
+                
+                // Add to cache dictionary
+                lock (_cacheLock)
+                {
+                    _fileCache[cacheKey] = targetPath;
+                }
+                
+                Logger.Info($"Successfully downloaded and cached file: {song.Title} -> {targetPath} ({fileInfo.Length} bytes)");
+                return targetPath;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Failed to download and cache file for song: {song.Title}");
+                
+                // Clean up partial file if it exists
+                try
+                {
+                    if (File.Exists(targetPath))
+                    {
+                        File.Delete(targetPath);
+                    }
+                }
+                catch (Exception cleanupEx)
+                {
+                    Logger.Warn(cleanupEx, $"Failed to clean up partial file: {targetPath}");
+                }
+                
+                throw;
+            }
+            finally
+            {
+                // Remove from ongoing downloads
+                lock (_cacheLock)
+                {
+                    _ongoingDownloads.Remove(cacheKey);
                 }
             }
-            catch (Exception cleanupEx)
-            {
-                Logger.Warn(cleanupEx, $"Failed to clean up partial file: {targetPath}");
-            }
-            
-            throw;
+        }, cancellationToken);
+        
+        // Add to ongoing downloads
+        lock (_cacheLock)
+        {
+            _ongoingDownloads[cacheKey] = downloadTask;
         }
+        
+        return await downloadTask;
     }
     
     /// <summary>

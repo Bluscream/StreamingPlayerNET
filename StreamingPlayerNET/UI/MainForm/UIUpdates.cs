@@ -191,14 +191,15 @@ public partial class MainForm
 
     private ListView? GetActiveListView()
     {
-        return mainTabControl.SelectedTab switch
-        {
-            var tab when tab == searchTabPage => searchListView,
-            var tab when tab == queueTabPage => queueListView,
-            var tab when tab == playlistTabPage => playlistListView,
-            var tab when tab == downloadsTabPage => downloadsListView,
-            _ => null
-        };
+                    return mainTabControl.SelectedTab switch
+            {
+                var tab when tab == searchTabPage => searchListView,
+                var tab when tab == queueTabPage => queueListView,
+                var tab when tab == playlistTabPage => playlistListView,
+                var tab when tab == downloadsTabPage => downloadsListView,
+                var tab when tab == logsTabPage => logsListView,
+                _ => null
+            };
     }
 
     private void SafeInvoke(Action action)

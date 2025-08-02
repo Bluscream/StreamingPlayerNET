@@ -19,6 +19,9 @@ public partial class MainForm
             // Initialize configuration service first
             _configService = new ConfigurationService();
             
+            // Initialize log service
+            _logService = new LogService();
+            
             // Initialize individual services
             // Create and register source providers
             var youtubeProvider = new YouTubeSourceProvider(ConfigurationService.Current);

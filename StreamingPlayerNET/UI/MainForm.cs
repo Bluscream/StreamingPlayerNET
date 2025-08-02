@@ -25,6 +25,7 @@ public partial class MainForm : Form
     private ToastNotificationService? _toastNotificationService;
     private WindowsMediaService? _windowsMediaService;
     private GlobalHotkeys? _globalHotkeys;
+    private LogService? _logService;
     
     private List<Song> _searchResults = new();
     private List<Playlist> _playlists = new();

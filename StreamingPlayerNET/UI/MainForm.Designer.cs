@@ -51,6 +51,7 @@ partial class MainForm
         private TabPage queueTabPage;
         private TabPage playlistTabPage;
         private TabPage downloadsTabPage;
+        private TabPage logsTabPage;
 
     private TextBox searchTextBox;
     private Button searchButton;
@@ -66,11 +67,16 @@ partial class MainForm
     private ColumnHeader queueSourceColumn;
             private ListView playlistListView;
         private ListView downloadsListView;
+        private ListView logsListView;
         private ColumnHeader downloadTitleColumn;
         private ColumnHeader downloadArtistColumn;
         private ColumnHeader downloadStatusColumn;
         private ColumnHeader downloadProgressColumn;
         private ColumnHeader downloadTimeColumn;
+        private ColumnHeader logTimeColumn;
+        private ColumnHeader logLevelColumn;
+        private ColumnHeader logLoggerColumn;
+        private ColumnHeader logMessageColumn;
     private ColumnHeader playlistTitleColumn;
     private ColumnHeader playlistArtistColumn;
     private ColumnHeader playlistDurationColumn;
@@ -165,6 +171,12 @@ partial class MainForm
         downloadStatusColumn = new ColumnHeader();
         downloadProgressColumn = new ColumnHeader();
         downloadTimeColumn = new ColumnHeader();
+        logsTabPage = new TabPage();
+        logsListView = new ListView();
+        logTimeColumn = new ColumnHeader();
+        logLevelColumn = new ColumnHeader();
+        logLoggerColumn = new ColumnHeader();
+        logMessageColumn = new ColumnHeader();
         playerPanel = new Panel();
         playerSplitContainer = new SplitContainer();
         currentSongLabel = new Label();
@@ -192,6 +204,7 @@ partial class MainForm
         queueTabPage.SuspendLayout();
         playlistTabPage.SuspendLayout();
         downloadsTabPage.SuspendLayout();
+        logsTabPage.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)playlistSplitContainer).BeginInit();
         playlistSplitContainer.Panel1.SuspendLayout();
         playlistSplitContainer.Panel2.SuspendLayout();
@@ -376,6 +389,7 @@ partial class MainForm
         mainTabControl.Controls.Add(queueTabPage);
         mainTabControl.Controls.Add(playlistTabPage);
         mainTabControl.Controls.Add(downloadsTabPage);
+        mainTabControl.Controls.Add(logsTabPage);
         mainTabControl.Dock = DockStyle.Fill;
         mainTabControl.Location = new Point(0, 24);
         mainTabControl.Name = "mainTabControl";
@@ -624,6 +638,50 @@ partial class MainForm
         downloadTimeColumn.Text = "Time";
         downloadTimeColumn.Width = 100;
         // 
+        // logsTabPage
+        // 
+        logsTabPage.Controls.Add(logsListView);
+        logsTabPage.Location = new Point(4, 24);
+        logsTabPage.Name = "logsTabPage";
+        logsTabPage.Padding = new Padding(3);
+        logsTabPage.Size = new Size(992, 438);
+        logsTabPage.TabIndex = 4;
+        logsTabPage.Text = "📋 Logs";
+        logsTabPage.UseVisualStyleBackColor = true;
+        // 
+        // logsListView
+        // 
+        logsListView.Columns.AddRange(new ColumnHeader[] { logTimeColumn, logLevelColumn, logLoggerColumn, logMessageColumn });
+        logsListView.Dock = DockStyle.Fill;
+        logsListView.FullRowSelect = true;
+        logsListView.GridLines = true;
+        logsListView.Location = new Point(3, 3);
+        logsListView.Name = "logsListView";
+        logsListView.Size = new Size(986, 432);
+        logsListView.TabIndex = 0;
+        logsListView.UseCompatibleStateImageBehavior = false;
+        logsListView.View = View.Details;
+        // 
+        // logTimeColumn
+        // 
+        logTimeColumn.Text = "Time";
+        logTimeColumn.Width = 100;
+        // 
+        // logLevelColumn
+        // 
+        logLevelColumn.Text = "Level";
+        logLevelColumn.Width = 80;
+        // 
+        // logLoggerColumn
+        // 
+        logLoggerColumn.Text = "Logger";
+        logLoggerColumn.Width = 150;
+        // 
+        // logMessageColumn
+        // 
+        logMessageColumn.Text = "Message";
+        logMessageColumn.Width = 650;
+        // 
         // playerPanel
         // 
         playerPanel.Controls.Add(playerSplitContainer);
@@ -851,6 +909,7 @@ partial class MainForm
         queueTabPage.ResumeLayout(false);
         playlistTabPage.ResumeLayout(false);
         downloadsTabPage.ResumeLayout(false);
+        logsTabPage.ResumeLayout(false);
         playlistSplitContainer.Panel1.ResumeLayout(false);
         playlistSplitContainer.Panel2.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)playlistSplitContainer).EndInit();

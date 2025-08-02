@@ -248,9 +248,9 @@ public class CachingService
                             {
                                 if (_downloadInfos.TryGetValue(cacheKey, out var info))
                                 {
-                                    info.Status = "Downloading";
-                                    info.BytesDownloaded = e.BytesDownloaded;
-                                    info.TotalBytes = e.TotalBytes;
+                                                                               info.Status = "Downloading";
+                                           info.BytesDownloaded = e.BytesReceived;
+                                           info.TotalBytes = e.TotalBytes;
                                     DownloadProgressChanged?.Invoke(this, e);
                                 }
                             }

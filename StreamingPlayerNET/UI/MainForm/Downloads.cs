@@ -289,18 +289,18 @@ public partial class MainForm
             var download = _downloads.FirstOrDefault(d => d.Title == e.SongTitle);
             if (download != null)
             {
-                download.BytesDownloaded = e.BytesDownloaded;
+                download.BytesDownloaded = e.BytesReceived;
                 download.TotalBytes = e.TotalBytes;
                 download.Status = "Downloading";
                 
                 // Calculate estimated time remaining
-                if (e.BytesDownloaded > 0 && e.TotalBytes > 0)
+                if (e.BytesReceived > 0 && e.TotalBytes > 0)
                 {
                     var elapsed = DateTime.Now - download.StartTime;
-                    var bytesPerSecond = e.BytesDownloaded / elapsed.TotalSeconds;
+                    var bytesPerSecond = e.BytesReceived / elapsed.TotalSeconds;
                     if (bytesPerSecond > 0)
                     {
-                        var remainingBytes = e.TotalBytes - e.BytesDownloaded;
+                        var remainingBytes = e.TotalBytes - e.BytesReceived;
                         download.EstimatedTimeRemaining = TimeSpan.FromSeconds(remainingBytes / bytesPerSecond);
                     }
                 }

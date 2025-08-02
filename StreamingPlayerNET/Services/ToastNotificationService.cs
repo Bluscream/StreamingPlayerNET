@@ -124,13 +124,34 @@ public class ToastNotificationService : IDisposable
         try
         {
             // Create toast notification using the modern toolkit
-            new ToastContentBuilder()
+            var builder = new ToastContentBuilder()
                 .AddText(title, AdaptiveTextStyle.Header)
                 .AddText(message, AdaptiveTextStyle.Body)
                 .SetToastScenario(ToastScenario.Default)
                 .SetToastDuration(ToastDuration.Short)
-                .AddAudio(null, silent: true) // Silent notification
-                .Show(); // Show the toast
+                .AddAudio(null, silent: true); // Silent notification
+            
+            // Add app logo if available
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream("StreamingPlayerNET.logo.png");
+                if (stream != null)
+                {
+                    var tempPath = Path.GetTempFileName() + ".png";
+                    using (var fileStream = File.Create(tempPath))
+                    {
+                        stream.CopyTo(fileStream);
+                    }
+                    builder.AddAppLogoOverride(new Uri(tempPath), ToastGenericAppLogoCrop.Circle);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Debug(ex, "Failed to add app logo to notification");
+            }
+            
+            builder.Show(); // Show the toast
             
             Logger.Debug($"Showed generic notification: {title}");
         }

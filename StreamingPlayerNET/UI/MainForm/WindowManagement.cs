@@ -104,8 +104,8 @@ public partial class MainForm
         // Dispose toast notification service
         _toastNotificationService?.Dispose();
         
-        // Save queue cache before shutting down
-        SaveCachedQueue();
+        // Save queue cache before shutting down (immediate save to ensure it completes)
+        SaveCachedQueueImmediate();
         
         _musicPlayerService?.Stop();
         _progressTimer?.Stop();

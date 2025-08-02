@@ -218,6 +218,18 @@ public partial class MainForm
             Logger.Error(ex, "Failed to save cached queue");
         }
     }
+    
+    private void SaveCachedQueueImmediate()
+    {
+        try
+        {
+            QueueCacheService.SaveQueueImmediate(_queue);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "Failed to save cached queue immediately");
+        }
+    }
 
     private void OnQueueSongsChanged()
     {

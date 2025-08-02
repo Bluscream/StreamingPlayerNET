@@ -166,8 +166,7 @@ public class NAudioPlaybackService : IPlaybackService
                 try
                 {
                     Logger.Debug("Using download service for playback");
-                    var songTitle = song?.Title;
-                    var tempFilePath = await _downloadService.DownloadAudioAsync(streamInfo, songTitle, cancellationToken);
+                                    var tempFilePath = await _downloadService.DownloadAudioAsync(song ?? new Song { Title = "Unknown" }, streamInfo, cancellationToken);
                     
                     // Cache the downloaded file if caching service is available
                     if (_cachingService != null && song != null)

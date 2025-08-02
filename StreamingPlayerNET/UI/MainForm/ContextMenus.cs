@@ -231,7 +231,7 @@ public partial class MainForm
                     if (song.SelectedStream != null)
                     {
                         // Download the audio file
-                        var filePath = await _downloadService.DownloadAudioAsync(song.SelectedStream, song.Title);
+                        var filePath = await _downloadService.DownloadAudioAsync(song, song.SelectedStream);
                         
                         Logger.Info($"Successfully downloaded song to: {filePath}");
                         

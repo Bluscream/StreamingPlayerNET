@@ -19,10 +19,10 @@ public class YouTubeDownloadService : IDownloadService
         _config = config;
     }
     
-    public async Task<string> DownloadAudioAsync(AudioStreamInfo streamInfo, string? songTitle = null, CancellationToken cancellationToken = default)
+    public async Task<string> DownloadAudioAsync(Song song, AudioStreamInfo streamInfo, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
-        Logger.Info($"Starting download of audio stream: {streamInfo}");
+        Logger.Info($"Downloading audio for song: {song.Title}");
         
         var tempFile = Path.GetTempFileName();
         
@@ -48,10 +48,9 @@ public class YouTubeDownloadService : IDownloadService
             response.EnsureSuccessStatusCode();
             
             var totalBytes = response.Content.Headers.ContentLength ?? 0;
-            var displayTitle = songTitle ?? "Unknown";
             
             // Report download start
-            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(displayTitle, "Starting download..."));
+            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, "Starting download..."));
             
             await using (var fileStream = File.Create(tempFile))
             using (var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken))
@@ -68,7 +67,7 @@ public class YouTubeDownloadService : IDownloadService
                     // Report progress every 64KB or when complete
                     if (totalBytesRead % 65536 == 0 || totalBytesRead == totalBytes)
                     {
-                        DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(displayTitle, totalBytesRead, totalBytes));
+                        DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, totalBytesRead, totalBytes));
                     }
                 }
                 
@@ -80,14 +79,14 @@ public class YouTubeDownloadService : IDownloadService
             Logger.Info($"Download completed: {fileSize.Bytes()} saved to {tempFile} in {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
             
             // Report download completion
-            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(displayTitle, "Download completed"));
+            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, "Download completed"));
             
             return tempFile;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            Logger.Error(ex, $"Download failed for stream: {streamInfo} after {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
+            Logger.Error(ex, $"Download failed for song: {song.Title} after {stopwatch.Elapsed.TotalMilliseconds.Milliseconds()}");
             
             // Clean up temp file on failure
             try { File.Delete(tempFile); } catch { }

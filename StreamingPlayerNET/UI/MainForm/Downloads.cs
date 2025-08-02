@@ -285,12 +285,12 @@ public partial class MainForm
         try
         {
             // Parse the song title to extract the cache key if present
-            string songTitle = e.SongTitle;
+            string songTitle = e.Song.Title;
             string? cacheKey = null;
             
-            if (e.SongTitle.Contains("|"))
+            if (e.Song.Title.Contains("|"))
             {
-                var parts = e.SongTitle.Split('|', 2);
+                var parts = e.Song.Title.Split('|', 2);
                 songTitle = parts[0];
                 cacheKey = parts[1];
             }

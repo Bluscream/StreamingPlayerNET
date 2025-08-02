@@ -19,72 +19,41 @@ public class SpotifyDownloadService : IDownloadService
         _ytdlpPath = ytdlpPath;
     }
 
-    public async Task<string> DownloadAudioAsync(AudioStreamInfo streamInfo, string? songTitle = null, CancellationToken cancellationToken = default)
+    public async Task<string> DownloadAudioAsync(Song song, AudioStreamInfo streamInfo, CancellationToken cancellationToken = default)
     {
+        Logger.Info($"Downloading Spotify audio for song: {song.Title}");
+        
         try
         {
-            Logger.Debug($"Downloading Spotify audio: {songTitle ?? streamInfo.Url}");
+            var tempFile = Path.GetTempFileName();
+            var outputFile = Path.ChangeExtension(tempFile, streamInfo.Extension);
             
-            // Extract Spotify track ID from the URL
-            var spotifyUrl = streamInfo.Url;
-            if (!spotifyUrl.StartsWith("spotify:track:"))
-            {
-                Logger.Error($"Invalid Spotify URL format: {spotifyUrl}");
-                return string.Empty;
-            }
-
-            var trackId = spotifyUrl.Replace("spotify:track:", "");
-            var outputFileName = $"{songTitle ?? trackId}.%(ext)s";
+            // Report download start
+            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, "Starting download..."));
             
-            // Create output directory if it doesn't exist
-            var outputDir = Path.Combine("Music", "Spotify");
-            Directory.CreateDirectory(outputDir);
-
-            var outputPath = Path.Combine(outputDir, outputFileName);
-
-            // Build yt-dlp command arguments
-            var arguments = new List<string>
-            {
-                $"--extract-audio",
-                $"--audio-format", "mp3",
-                $"--audio-quality", "0", // Best quality
-                $"--output", outputPath,
-                $"--no-playlist",
-                $"--no-warnings",
-                $"--quiet",
-                $"--progress-template", "download:%(progress.downloaded_bytes)s/%(progress.total_bytes)s"
-            };
-
-            // Add quality settings based on preferences
-            var bitrate = (int)_settings.PreferredQuality;
-            arguments.AddRange(new[] { "--audio-bitrate", bitrate.ToString() });
-
-            // Add the Spotify URL
-            arguments.Add($"https://open.spotify.com/track/{trackId}");
-
             var startInfo = new ProcessStartInfo
             {
                 FileName = _ytdlpPath,
-                Arguments = string.Join(" ", arguments),
+                Arguments = $"--extract-audio --audio-format {streamInfo.Extension} --audio-quality 0 --output \"{outputFile}\" \"{streamInfo.Url}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true
             };
-
+            
             using var process = new Process { StartInfo = startInfo };
             var outputLines = new List<string>();
             var errorLines = new List<string>();
-
+            
             process.OutputDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
                 {
                     outputLines.Add(e.Data);
-                    ParseProgress(e.Data);
+                    ParseProgress(e.Data, song);
                 }
             };
-
+            
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
@@ -92,27 +61,23 @@ public class SpotifyDownloadService : IDownloadService
                     errorLines.Add(e.Data);
                 }
             };
-
+            
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
-
+            
             await process.WaitForExitAsync(cancellationToken);
-
-            if (process.ExitCode == 0)
+            
+            if (process.ExitCode == 0 && File.Exists(outputFile))
             {
-                // Find the downloaded file
-                var downloadedFile = Directory.GetFiles(outputDir, $"{songTitle ?? trackId}.*")
-                    .FirstOrDefault(f => Path.GetExtension(f).ToLower() == ".mp3");
-
-                if (!string.IsNullOrEmpty(downloadedFile))
-                {
-                    Logger.Debug($"Successfully downloaded: {downloadedFile}");
-                    return downloadedFile;
-                }
+                // Report download completion
+                DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, "Download completed"));
+                
+                Logger.Info($"Successfully downloaded Spotify audio to: {outputFile}");
+                return outputFile;
             }
-
-            Logger.Error($"Download failed for {songTitle ?? trackId}. Exit code: {process.ExitCode}");
+            
+            Logger.Error($"Download failed for {song.Title}. Exit code: {process.ExitCode}");
             if (errorLines.Any())
             {
                 Logger.Error($"yt-dlp errors: {string.Join(Environment.NewLine, errorLines)}");
@@ -129,11 +94,11 @@ public class SpotifyDownloadService : IDownloadService
         }
         catch (Exception ex)
         {
-            Logger.Error(ex, $"Error downloading Spotify audio: {songTitle ?? streamInfo.Url}");
+            Logger.Error(ex, $"Error downloading Spotify audio: {song.Title}");
             return string.Empty;
         }
     }
-
+    
     public async Task<Stream> GetAudioStreamAsync(AudioStreamInfo streamInfo, CancellationToken cancellationToken = default)
     {
         try
@@ -141,7 +106,9 @@ public class SpotifyDownloadService : IDownloadService
             Logger.Debug($"Getting audio stream for: {streamInfo.Url}");
             
             // For Spotify, we need to download the file first, then return a stream
-            var downloadedPath = await DownloadAudioAsync(streamInfo, cancellationToken: cancellationToken);
+            // Create a temporary song object for the download
+            var tempSong = new Song { Title = "Spotify Track" };
+            var downloadedPath = await DownloadAudioAsync(tempSong, streamInfo, cancellationToken: cancellationToken);
             
             if (!string.IsNullOrEmpty(downloadedPath) && File.Exists(downloadedPath))
             {
@@ -180,7 +147,7 @@ public class SpotifyDownloadService : IDownloadService
         return false;
     }
 
-    private void ParseProgress(string output)
+    private void ParseProgress(string output, Song song)
     {
         try
         {
@@ -196,7 +163,7 @@ public class SpotifyDownloadService : IDownloadService
                     var percentage = total > 0 ? (int)((downloaded * 100) / total) : 0;
                     
                     var progressEventArgs = new DownloadProgressEventArgs(
-                        "Spotify Track",
+                        song,
                         downloaded,
                         total,
                         $"Downloading... {percentage}%");

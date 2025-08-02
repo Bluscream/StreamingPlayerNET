@@ -256,7 +256,7 @@ public class CachingService
                                     // Create a new progress event that includes the cache key in the song title
                                     // This allows the UI to match the progress to the correct download
                                     var progressEvent = new DownloadProgressEventArgs(
-                                        $"{e.SongTitle}|{cacheKey}", 
+                                        $"{e.Song.Title}|{cacheKey}", 
                                         e.BytesReceived, 
                                         e.TotalBytes, 
                                         e.Status
@@ -270,7 +270,7 @@ public class CachingService
                     
                     try
                     {
-                        downloadedFilePath = await _downloadService.DownloadAudioAsync(streamInfo, song.Title, cancellationToken);
+                        downloadedFilePath = await _downloadService.DownloadAudioAsync(song, streamInfo, cancellationToken);
                         
                         // Move the downloaded file to the cache location
                         if (File.Exists(downloadedFilePath))

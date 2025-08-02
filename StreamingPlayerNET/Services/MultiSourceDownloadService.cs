@@ -20,7 +20,7 @@ public class MultiSourceDownloadService : IDownloadService
     {
         Logger.Info($"Downloading audio for song: {song.Title}");
         
-        var enabledProviders = _sourceManager.GetEnabledProviders();
+        var enabledProviders = _sourceManager.GetEnabledSourceProvidersWithSettings();
         if (!enabledProviders.Any())
         {
             throw new InvalidOperationException("No source providers are enabled");
@@ -69,7 +69,7 @@ public class MultiSourceDownloadService : IDownloadService
     {
         Logger.Info($"Getting audio stream");
         
-        var enabledProviders = _sourceManager.GetEnabledProviders();
+        var enabledProviders = _sourceManager.GetEnabledSourceProvidersWithSettings();
         if (!enabledProviders.Any())
         {
             throw new InvalidOperationException("No source providers are enabled");
@@ -98,7 +98,7 @@ public class MultiSourceDownloadService : IDownloadService
     {
         Logger.Info($"Getting content length for URL");
         
-        var enabledProviders = _sourceManager.GetEnabledProviders();
+        var enabledProviders = _sourceManager.GetEnabledSourceProvidersWithSettings();
         if (!enabledProviders.Any())
         {
             throw new InvalidOperationException("No source providers are enabled");
@@ -125,7 +125,7 @@ public class MultiSourceDownloadService : IDownloadService
     
     public bool SupportsDirectStreaming(AudioStreamInfo streamInfo)
     {
-        var enabledProviders = _sourceManager.GetEnabledProviders();
+        var enabledProviders = _sourceManager.GetEnabledSourceProvidersWithSettings();
         return enabledProviders.Any(provider => provider.DownloadService.SupportsDirectStreaming(streamInfo));
     }
 }

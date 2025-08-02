@@ -16,16 +16,12 @@ public class MusicPlayerService
     private readonly IDownloadService _downloadService;
     private readonly IPlaybackService _playbackService;
     
-    private Song? _currentSong;
-    private Playlist? _currentPlaylist;
-    private int _currentPlaylistIndex = -1;
     private bool _wasManuallyStopped = false;
-    private float _currentVolume = 1.0f;
     
-    public Song? CurrentSong { get => _currentSong; private set => _currentSong = value; }
-    public Playlist? CurrentPlaylist { get => _currentPlaylist; private set => _currentPlaylist = value; }
-    public float CurrentVolume { get => _currentVolume; private set => _currentVolume = value; }
-    public int CurrentPlaylistIndex { get => _currentPlaylistIndex; private set => _currentPlaylistIndex = value; }
+    public Song? CurrentSong { get; private set; }
+    public Playlist? CurrentPlaylist { get; private set; }
+    public float CurrentVolume { get; private set; } = 1.0f;
+    public int CurrentPlaylistIndex { get; private set; } = -1;
     
     public event EventHandler<Song>? SongChanged;
     public event EventHandler<PlaybackState>? PlaybackStateChanged;

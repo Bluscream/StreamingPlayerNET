@@ -3,9 +3,16 @@ using NLog;
 
 namespace StreamingPlayerNET.UI;
 
+public enum SongContextMenuType
+{
+    Search,
+    Queue,
+    Playlist
+}
+
 public partial class MainForm
 {
-    private void SetupSearchContextMenu()
+    private void SetupSongContextMenu(SongContextMenuType contextMenuType)
     {
         var contextMenu = new ContextMenuStrip();
         
@@ -14,22 +21,46 @@ public partial class MainForm
         playMenuItem.Click += async (s, e) => await OnContextMenuPlay();
         contextMenu.Items.Add(playMenuItem);
         
-        // Add to queue menu item
-        var addToQueueMenuItem = new ToolStripMenuItem("Add to Queue");
-        addToQueueMenuItem.Click += async (s, e) => await OnContextMenuAddToQueue();
-        contextMenu.Items.Add(addToQueueMenuItem);
-        
-        // Add to queue next menu item
-        var addToQueueNextMenuItem = new ToolStripMenuItem("Add to Queue (Next)");
-        addToQueueNextMenuItem.Click += async (s, e) => await OnContextMenuAddToQueueNext();
-        contextMenu.Items.Add(addToQueueNextMenuItem);
-        
-        // Add multiple to queue menu item
-        var addMultipleToQueueMenuItem = new ToolStripMenuItem("Add Selected to Queue");
-        addMultipleToQueueMenuItem.Click += async (s, e) => await OnContextMenuAddMultipleToQueue();
-        contextMenu.Items.Add(addMultipleToQueueMenuItem);
+        // Add to queue menu items (only for search and playlist)
+        if (contextMenuType != SongContextMenuType.Queue)
+        {
+            var addToQueueMenuItem = new ToolStripMenuItem("Add to Queue");
+            addToQueueMenuItem.Click += async (s, e) => await OnContextMenuAddToQueue();
+            contextMenu.Items.Add(addToQueueMenuItem);
+            
+            // Add to queue next menu item (only for search)
+            if (contextMenuType == SongContextMenuType.Search)
+            {
+                var addToQueueNextMenuItem = new ToolStripMenuItem("Add to Queue (Next)");
+                addToQueueNextMenuItem.Click += async (s, e) => await OnContextMenuAddToQueueNext();
+                contextMenu.Items.Add(addToQueueNextMenuItem);
+                
+                // Add multiple to queue menu item (only for search)
+                var addMultipleToQueueMenuItem = new ToolStripMenuItem("Add Selected to Queue");
+                addMultipleToQueueMenuItem.Click += async (s, e) => await OnContextMenuAddMultipleToQueue();
+                contextMenu.Items.Add(addMultipleToQueueMenuItem);
+            }
+        }
         
         contextMenu.Items.Add(new ToolStripSeparator());
+        
+        // Queue management items (only for queue)
+        if (contextMenuType == SongContextMenuType.Queue)
+        {
+            var removeFromQueueMenuItem = new ToolStripMenuItem("Remove from Queue");
+            removeFromQueueMenuItem.Click += (s, e) => OnContextMenuRemoveFromQueue();
+            contextMenu.Items.Add(removeFromQueueMenuItem);
+            
+            var moveUpMenuItem = new ToolStripMenuItem("Move Up");
+            moveUpMenuItem.Click += (s, e) => OnContextMenuMoveUp();
+            contextMenu.Items.Add(moveUpMenuItem);
+            
+            var moveDownMenuItem = new ToolStripMenuItem("Move Down");
+            moveDownMenuItem.Click += (s, e) => OnContextMenuMoveDown();
+            contextMenu.Items.Add(moveDownMenuItem);
+            
+            contextMenu.Items.Add(new ToolStripSeparator());
+        }
         
         // Copy URL menu item
         var copyUrlMenuItem = new ToolStripMenuItem("Copy URL");
@@ -44,7 +75,7 @@ public partial class MainForm
         contextMenu.Items.Add(new ToolStripSeparator());
         
         // View on YouTube menu item
-        var viewOnYouTubeMenuItem = new ToolStripMenuItem("Open URL");
+        var viewOnYouTubeMenuItem = new ToolStripMenuItem(contextMenuType == SongContextMenuType.Queue ? "View on YouTube" : "Open URL");
         viewOnYouTubeMenuItem.Click += (s, e) => OnContextMenuViewOnYouTube();
         contextMenu.Items.Add(viewOnYouTubeMenuItem);
         
@@ -60,125 +91,37 @@ public partial class MainForm
         showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
         contextMenu.Items.Add(showInExplorerMenuItem);
         
-        // Assign context menu to search list
-        searchListView.ContextMenuStrip = contextMenu;
-        
-        // Update menu items based on selection
-        searchListView.SelectedIndexChanged += (s, e) => UpdateSearchContextMenuItems(contextMenu);
+        // Assign context menu to appropriate list view
+        switch (contextMenuType)
+        {
+            case SongContextMenuType.Search:
+                searchListView.ContextMenuStrip = contextMenu;
+                searchListView.SelectedIndexChanged += (s, e) => UpdateSearchContextMenuItems(contextMenu);
+                break;
+            case SongContextMenuType.Queue:
+                queueListView.ContextMenuStrip = contextMenu;
+                queueListView.SelectedIndexChanged += (s, e) => UpdateQueueContextMenuItems(contextMenu);
+                break;
+            case SongContextMenuType.Playlist:
+                playlistListView.ContextMenuStrip = contextMenu;
+                playlistListView.SelectedIndexChanged += (s, e) => UpdatePlaylistContextMenuItems(contextMenu);
+                break;
+        }
+    }
+
+    private void SetupSearchContextMenu()
+    {
+        SetupSongContextMenu(SongContextMenuType.Search);
     }
 
     private void SetupQueueContextMenu()
     {
-        var contextMenu = new ContextMenuStrip();
-        
-        // Play menu item
-        var playMenuItem = new ToolStripMenuItem("Play");
-        playMenuItem.Click += async (s, e) => await OnContextMenuPlay();
-        contextMenu.Items.Add(playMenuItem);
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-        
-        // Queue management items
-        var removeFromQueueMenuItem = new ToolStripMenuItem("Remove from Queue");
-        removeFromQueueMenuItem.Click += (s, e) => OnContextMenuRemoveFromQueue();
-        contextMenu.Items.Add(removeFromQueueMenuItem);
-        
-        var moveUpMenuItem = new ToolStripMenuItem("Move Up");
-        moveUpMenuItem.Click += (s, e) => OnContextMenuMoveUp();
-        contextMenu.Items.Add(moveUpMenuItem);
-        
-        var moveDownMenuItem = new ToolStripMenuItem("Move Down");
-        moveDownMenuItem.Click += (s, e) => OnContextMenuMoveDown();
-        contextMenu.Items.Add(moveDownMenuItem);
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-        
-        // Copy URL menu item
-        var copyUrlMenuItem = new ToolStripMenuItem("Copy URL");
-        copyUrlMenuItem.Click += (s, e) => OnContextMenuCopyUrl();
-        contextMenu.Items.Add(copyUrlMenuItem);
-        
-        // Copy title menu item
-        var copyTitleMenuItem = new ToolStripMenuItem("Copy Title");
-        copyTitleMenuItem.Click += (s, e) => OnContextMenuCopyTitle();
-        contextMenu.Items.Add(copyTitleMenuItem);
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-        
-        // View on YouTube menu item
-        var viewOnYouTubeMenuItem = new ToolStripMenuItem("View on YouTube");
-        viewOnYouTubeMenuItem.Click += (s, e) => OnContextMenuViewOnYouTube();
-        contextMenu.Items.Add(viewOnYouTubeMenuItem);
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-        
-        // Open File menu item
-        var openFileMenuItem = new ToolStripMenuItem("Open File");
-        openFileMenuItem.Click += (s, e) => OnContextMenuOpenFile();
-        contextMenu.Items.Add(openFileMenuItem);
-        
-        // Show in Explorer menu item
-        var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
-        showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
-        contextMenu.Items.Add(showInExplorerMenuItem);
-        
-        // Assign context menu to queue list
-        queueListView.ContextMenuStrip = contextMenu;
-        
-        // Update menu items based on selection
-        queueListView.SelectedIndexChanged += (s, e) => UpdateQueueContextMenuItems(contextMenu);
+        SetupSongContextMenu(SongContextMenuType.Queue);
     }
 
     private void SetupPlaylistContextMenu()
     {
-        var contextMenu = new ContextMenuStrip();
-        
-        // Play menu item
-        var playMenuItem = new ToolStripMenuItem("Play");
-        playMenuItem.Click += async (s, e) => await OnContextMenuPlay();
-        contextMenu.Items.Add(playMenuItem);
-        
-        // Add to queue menu item
-        var addToQueueMenuItem = new ToolStripMenuItem("Add to Queue");
-        addToQueueMenuItem.Click += async (s, e) => await OnContextMenuAddToQueue();
-        contextMenu.Items.Add(addToQueueMenuItem);
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-        
-        // Copy URL menu item
-        var copyUrlMenuItem = new ToolStripMenuItem("Copy URL");
-        copyUrlMenuItem.Click += (s, e) => OnContextMenuCopyUrl();
-        contextMenu.Items.Add(copyUrlMenuItem);
-        
-        // Copy title menu item
-        var copyTitleMenuItem = new ToolStripMenuItem("Copy Title");
-        copyTitleMenuItem.Click += (s, e) => OnContextMenuCopyTitle();
-        contextMenu.Items.Add(copyTitleMenuItem);
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-        
-        // View on YouTube menu item
-        var viewOnYouTubeMenuItem = new ToolStripMenuItem("Open URL");
-        viewOnYouTubeMenuItem.Click += (s, e) => OnContextMenuViewOnYouTube();
-        contextMenu.Items.Add(viewOnYouTubeMenuItem);
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-        
-        // Open File menu item
-        var openFileMenuItem = new ToolStripMenuItem("Open File");
-        openFileMenuItem.Click += (s, e) => OnContextMenuOpenFile();
-        contextMenu.Items.Add(openFileMenuItem);
-        
-        // Show in Explorer menu item
-        var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
-        showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
-        contextMenu.Items.Add(showInExplorerMenuItem);
-        
-        // Assign context menu to playlist list
-        playlistListView.ContextMenuStrip = contextMenu;
-        
-        // Update menu items based on selection
-        playlistListView.SelectedIndexChanged += (s, e) => UpdatePlaylistContextMenuItems(contextMenu);
+        SetupSongContextMenu(SongContextMenuType.Playlist);
     }
 
     private void UpdateSearchContextMenuItems(ContextMenuStrip contextMenu)

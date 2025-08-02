@@ -6,7 +6,7 @@ public interface IDownloadService
 {
     event EventHandler<DownloadProgressEventArgs>? DownloadProgressChanged;
     
-    Task<string> DownloadAudioAsync(AudioStreamInfo streamInfo, string? songTitle = null, CancellationToken cancellationToken = default);
+    Task<string> DownloadAudioAsync(Song song, AudioStreamInfo streamInfo, CancellationToken cancellationToken = default);
     Task<Stream> GetAudioStreamAsync(AudioStreamInfo streamInfo, CancellationToken cancellationToken = default);
     Task<long> GetContentLengthAsync(string url, CancellationToken cancellationToken = default);
     bool SupportsDirectStreaming(AudioStreamInfo streamInfo);

@@ -77,13 +77,31 @@ public class Queue : Playlist
     
     public Song? CurrentSong => _currentIndex >= 0 && _currentIndex < Songs.Count ? Songs[_currentIndex] : null;
     
-    public Song? NextSong => _currentIndex + 1 < Songs.Count ? Songs[_currentIndex + 1] : null;
+    public Song? NextSong
+    {
+        get
+        {
+            if (Songs.Count == 0) return null;
+            if (_currentIndex + 1 < Songs.Count) return Songs[_currentIndex + 1];
+            if (_repeatMode == RepeatMode.All) return Songs[0]; // Loop back to beginning
+            return null;
+        }
+    }
     
-    public Song? PreviousSong => _currentIndex - 1 >= 0 ? Songs[_currentIndex - 1] : null;
+    public Song? PreviousSong
+    {
+        get
+        {
+            if (Songs.Count == 0) return null;
+            if (_currentIndex - 1 >= 0) return Songs[_currentIndex - 1];
+            if (_repeatMode == RepeatMode.All) return Songs[Songs.Count - 1]; // Loop to end
+            return null;
+        }
+    }
     
-    public bool HasNext => _currentIndex + 1 < Songs.Count;
+    public bool HasNext => _currentIndex + 1 < Songs.Count || (_repeatMode == RepeatMode.All && Songs.Count > 0);
     
-    public bool HasPrevious => _currentIndex - 1 >= 0;
+    public bool HasPrevious => _currentIndex - 1 >= 0 || (_repeatMode == RepeatMode.All && Songs.Count > 0);
     
     public new void AddSong(Song song)
     {
@@ -210,27 +228,61 @@ public class Queue : Playlist
     
     public void MoveToNext()
     {
-        if (HasNext)
+        if (_shuffleEnabled && Songs.Count > 0)
         {
-            _currentIndex++;
+            // Handle shuffle mode
+            if (_currentIndex < Songs.Count - 1)
+            {
+                _currentIndex++;
+            }
+            else if (_repeatMode == RepeatMode.All)
+            {
+                // Loop back to the beginning in shuffle mode
+                _currentIndex = 0;
+            }
         }
-        else if (_repeatMode == RepeatMode.All)
+        else
         {
-            // Loop back to the beginning
-            _currentIndex = 0;
+            // Handle normal mode
+            if (HasNext)
+            {
+                _currentIndex++;
+            }
+            else if (_repeatMode == RepeatMode.All)
+            {
+                // Loop back to the beginning
+                _currentIndex = 0;
+            }
         }
     }
     
     public void MoveToPrevious()
     {
-        if (HasPrevious)
+        if (_shuffleEnabled && Songs.Count > 0)
         {
-            _currentIndex--;
+            // Handle shuffle mode
+            if (_currentIndex > 0)
+            {
+                _currentIndex--;
+            }
+            else if (_repeatMode == RepeatMode.All)
+            {
+                // Loop to the end in shuffle mode
+                _currentIndex = Songs.Count - 1;
+            }
         }
-        else if (_repeatMode == RepeatMode.All)
+        else
         {
-            // Loop to the end
-            _currentIndex = Songs.Count - 1;
+            // Handle normal mode
+            if (HasPrevious)
+            {
+                _currentIndex--;
+            }
+            else if (_repeatMode == RepeatMode.All)
+            {
+                // Loop to the end
+                _currentIndex = Songs.Count - 1;
+            }
         }
     }
     

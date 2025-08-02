@@ -25,9 +25,9 @@ public class YouTubeMusicDownloadService : IDownloadService
         Logger.Info("YouTube Music Download Service initialized");
     }
     
-    public async Task<string> DownloadAudioAsync(AudioStreamInfo streamInfo, string? songTitle = null, CancellationToken cancellationToken = default)
+    public async Task<string> DownloadAudioAsync(Song song, AudioStreamInfo streamInfo, CancellationToken cancellationToken = default)
     {
-        Logger.Info($"Downloading audio from: {streamInfo.Url}");
+        Logger.Info($"Downloading audio for song: {song.Title}");
         
         return await ExecuteWithRetryAsync(async () =>
         {
@@ -41,10 +41,9 @@ public class YouTubeMusicDownloadService : IDownloadService
             response.EnsureSuccessStatusCode();
             
             var totalBytes = response.Content.Headers.ContentLength ?? 0;
-            var displayTitle = songTitle ?? "Unknown";
             
             // Report download start
-            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(displayTitle, "Starting download..."));
+            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, "Starting download..."));
             
             using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var fileStream = new FileStream(finalFileName, FileMode.Create, FileAccess.Write);
@@ -61,7 +60,7 @@ public class YouTubeMusicDownloadService : IDownloadService
                 // Report progress every 64KB or when complete
                 if (totalBytesRead % 65536 == 0 || totalBytesRead == totalBytes)
                 {
-                    DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(displayTitle, totalBytesRead, totalBytes));
+                    DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, totalBytesRead, totalBytes));
                 }
             }
             
@@ -72,7 +71,7 @@ public class YouTubeMusicDownloadService : IDownloadService
             }
             
             // Report download completion
-            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(displayTitle, "Download completed"));
+            DownloadProgressChanged?.Invoke(this, new DownloadProgressEventArgs(song, "Download completed"));
             
             Logger.Info($"Successfully downloaded audio to: {finalFileName}");
             return finalFileName;

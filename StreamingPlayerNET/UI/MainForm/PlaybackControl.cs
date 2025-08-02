@@ -270,10 +270,23 @@ public partial class MainForm
                 return;
             }
         }
-        else if (_queue.RepeatMode == RepeatMode.All && _queue.HasNext)
+        else if (_queue.RepeatMode == RepeatMode.All)
         {
             // Move to next song (will loop back to beginning if at end)
             Logger.Info($"[Completed-{completedId}] AUTO-PLAYING next song (Repeat All mode)");
+            _queue.MoveToNext();
+            var nextSong = _queue.CurrentSong;
+            if (nextSong != null)
+            {
+                Logger.Info($"[Completed-{completedId}] Next song: {nextSong.Title}");
+                _ = Task.Run(async () => await PlaySong(nextSong));
+                return;
+            }
+        }
+        else if (_queue.RepeatMode == RepeatMode.None && _queue.HasNext)
+        {
+            // Play next song if available (no repeat)
+            Logger.Info($"[Completed-{completedId}] AUTO-PLAYING next song (No repeat mode)");
             _queue.MoveToNext();
             var nextSong = _queue.CurrentSong;
             if (nextSong != null)

@@ -31,6 +31,7 @@ public partial class MainForm : Form
     private List<Playlist> _playlists = new();
     private Queue _queue = new();
     private List<DownloadInfo> _downloads = new();
+    private Dictionary<string, CancellationTokenSource> _activeDownloads = new();
     private System.Windows.Forms.Timer? _progressTimer;
     private System.Windows.Forms.Timer? _downloadsUpdateTimer;
     

@@ -79,8 +79,8 @@ public partial class MainForm
         
         contextMenu.Items.Add(new ToolStripSeparator());
         
-        // View on YouTube menu item
-        var viewOnYouTubeMenuItem = new ToolStripMenuItem(contextMenuType == SongContextMenuType.Queue ? "View on YouTube" : "Open URL");
+        // Open URL menu item
+        var viewOnYouTubeMenuItem = new ToolStripMenuItem("Open URL");
         viewOnYouTubeMenuItem.Click += (s, e) => OnContextMenuViewOnYouTube();
         contextMenu.Items.Add(viewOnYouTubeMenuItem);
         
@@ -230,8 +230,14 @@ public partial class MainForm
                     
                     if (song.SelectedStream != null)
                     {
-                        // Download the audio file
-                        var filePath = await _downloadService.DownloadAudioAsync(song);
+                        // Create cancellation token for this download
+                        var cancellationTokenSource = new CancellationTokenSource();
+                        
+                        // Add download to UI with cancellation token
+                        AddDownload(song, song.SelectedStream, cancellationTokenSource);
+                        
+                        // Download the audio file with cancellation token
+                        var filePath = await _downloadService.DownloadAudioAsync(song, cancellationTokenSource.Token);
                         
                         Logger.Info($"Successfully downloaded song to: {filePath}");
                         
@@ -247,6 +253,17 @@ public partial class MainForm
                     {
                         throw new InvalidOperationException("No audio stream available for download");
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    Logger.Info($"Download cancelled for song: {song.Title}");
+                    // Mark the download as cancelled in the UI
+                    if (song.SelectedStream != null)
+                    {
+                        var cacheKey = GenerateCacheKey(song, song.SelectedStream);
+                        MarkDownloadAsCancelled(cacheKey);
+                    }
+                    // Download was cancelled, no need to show error message
                 }
                 catch (Exception ex)
                 {
@@ -516,4 +533,6 @@ public partial class MainForm
             }
         }
     }
+    
+
 }

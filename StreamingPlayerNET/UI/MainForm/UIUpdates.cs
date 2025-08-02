@@ -155,7 +155,6 @@ public partial class MainForm
                     case "Play":
                     case "Copy URL":
                     case "Copy Title":
-                    case "View on YouTube":
                     case "Open URL":
                     case "Add to Queue":
                     case "Add to Queue (Next)":

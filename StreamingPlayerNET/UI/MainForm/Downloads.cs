@@ -17,6 +17,9 @@ public partial class MainForm
         // Setup downloads ListView
         SetupDownloadsListView();
         
+        // Setup downloads context menu
+        SetupDownloadsContextMenu();
+        
         Logger.Info("Downloads tab setup completed");
     }
     
@@ -25,10 +28,218 @@ public partial class MainForm
         downloadsListView.View = View.Details;
         downloadsListView.FullRowSelect = true;
         downloadsListView.GridLines = true;
-        downloadsListView.MultiSelect = false;
+        downloadsListView.MultiSelect = true; // Enable multiselect
         
         // Adjust columns
         AdjustDownloadsListViewColumns();
+    }
+    
+    private void SetupDownloadsContextMenu()
+    {
+        var contextMenu = new ContextMenuStrip();
+        
+        // Cancel download menu item
+        var cancelMenuItem = new ToolStripMenuItem("Cancel Download");
+        cancelMenuItem.Click += (s, e) => OnContextMenuCancelDownload();
+        contextMenu.Items.Add(cancelMenuItem);
+        
+        // Cancel multiple downloads menu item
+        var cancelMultipleMenuItem = new ToolStripMenuItem("Cancel Selected Downloads");
+        cancelMultipleMenuItem.Click += (s, e) => OnContextMenuCancelMultipleDownloads();
+        contextMenu.Items.Add(cancelMultipleMenuItem);
+        
+        contextMenu.Items.Add(new ToolStripSeparator());
+        
+        // Copy title menu item
+        var copyTitleMenuItem = new ToolStripMenuItem("Copy Title");
+        copyTitleMenuItem.Click += (s, e) => OnContextMenuCopyDownloadTitle();
+        contextMenu.Items.Add(copyTitleMenuItem);
+        
+        // Copy artist menu item
+        var copyArtistMenuItem = new ToolStripMenuItem("Copy Artist");
+        copyArtistMenuItem.Click += (s, e) => OnContextMenuCopyDownloadArtist();
+        contextMenu.Items.Add(copyArtistMenuItem);
+        
+        // Assign context menu to downloads ListView
+        downloadsListView.ContextMenuStrip = contextMenu;
+        downloadsListView.SelectedIndexChanged += (s, e) => UpdateDownloadsContextMenuItems(contextMenu);
+    }
+    
+    private void UpdateDownloadsContextMenuItems(ContextMenuStrip contextMenu)
+    {
+        var selectedCount = downloadsListView.SelectedItems.Count;
+        
+        // Enable/disable menu items based on selection
+        foreach (ToolStripItem item in contextMenu.Items)
+        {
+            if (item is ToolStripMenuItem menuItem)
+            {
+                switch (menuItem.Text)
+                {
+                    case "Cancel Download":
+                        menuItem.Enabled = selectedCount == 1;
+                        break;
+                    case "Cancel Selected Downloads":
+                        menuItem.Enabled = selectedCount > 1;
+                        break;
+                    case "Copy Title":
+                    case "Copy Artist":
+                        menuItem.Enabled = selectedCount == 1;
+                        break;
+                }
+            }
+        }
+    }
+    
+    private void OnContextMenuCancelDownload()
+    {
+        if (downloadsListView.SelectedItems.Count == 1)
+        {
+            var selectedItem = downloadsListView.SelectedItems[0];
+            if (selectedItem.Tag is DownloadInfo downloadInfo)
+            {
+                CancelDownload(downloadInfo);
+            }
+        }
+    }
+    
+    private void OnContextMenuCancelMultipleDownloads()
+    {
+        if (downloadsListView.SelectedItems.Count > 1)
+        {
+            var selectedDownloads = new List<DownloadInfo>();
+            
+            foreach (ListViewItem item in downloadsListView.SelectedItems)
+            {
+                if (item.Tag is DownloadInfo downloadInfo)
+                {
+                    selectedDownloads.Add(downloadInfo);
+                }
+            }
+            
+            if (selectedDownloads.Count > 0)
+            {
+                CancelMultipleDownloads(selectedDownloads);
+            }
+        }
+    }
+    
+    private void OnContextMenuCopyDownloadTitle()
+    {
+        if (downloadsListView.SelectedItems.Count == 1)
+        {
+            var selectedItem = downloadsListView.SelectedItems[0];
+            if (selectedItem.Tag is DownloadInfo downloadInfo)
+            {
+                Clipboard.SetText(downloadInfo.Title);
+                Logger.Info("Download title copied to clipboard");
+            }
+        }
+    }
+    
+    private void OnContextMenuCopyDownloadArtist()
+    {
+        if (downloadsListView.SelectedItems.Count == 1)
+        {
+            var selectedItem = downloadsListView.SelectedItems[0];
+            if (selectedItem.Tag is DownloadInfo downloadInfo)
+            {
+                Clipboard.SetText(downloadInfo.Artist);
+                Logger.Info("Download artist copied to clipboard");
+            }
+        }
+    }
+    
+    private void CancelDownload(DownloadInfo downloadInfo)
+    {
+        try
+        {
+            CancelDownloadByCacheKey(downloadInfo.CacheKey);
+            _toastNotificationService?.ShowGenericNotification("Download Cancelled", $"Cancelled download: {downloadInfo.Title}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, $"Failed to cancel download: {downloadInfo.Title}");
+        }
+    }
+    
+    private void CancelMultipleDownloads(List<DownloadInfo> downloads)
+    {
+        try
+        {
+            var cancelledCount = 0;
+            
+            foreach (var downloadInfo in downloads)
+            {
+                if (_activeDownloads.TryGetValue(downloadInfo.CacheKey, out var cancellationTokenSource))
+                {
+                    cancellationTokenSource.Cancel();
+                    downloadInfo.Status = "Cancelling...";
+                    cancelledCount++;
+                }
+            }
+            
+            UpdateDownloadsDisplay();
+            
+            Logger.Info($"Cancelled {cancelledCount} downloads");
+            _toastNotificationService?.ShowGenericNotification("Downloads Cancelled", $"Cancelled {cancelledCount} downloads");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "Failed to cancel multiple downloads");
+        }
+    }
+    
+    public void CancelDownloadByCacheKey(string cacheKey)
+    {
+        try
+        {
+            if (_activeDownloads.TryGetValue(cacheKey, out var cancellationTokenSource))
+            {
+                cancellationTokenSource.Cancel();
+                
+                var download = _downloads.FirstOrDefault(d => d.CacheKey == cacheKey);
+                if (download != null)
+                {
+                    download.Status = "Cancelled";
+                }
+                
+                UpdateDownloadsDisplay();
+                Logger.Info($"Cancelled download with cache key: {cacheKey}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, $"Failed to cancel download with cache key: {cacheKey}");
+        }
+    }
+    
+    public void MarkDownloadAsCancelled(string cacheKey)
+    {
+        if (InvokeRequired)
+        {
+            SafeInvoke(() => MarkDownloadAsCancelled(cacheKey));
+            return;
+        }
+        
+        try
+        {
+            var download = _downloads.FirstOrDefault(d => d.CacheKey == cacheKey);
+            if (download != null)
+            {
+                download.Status = "Cancelled";
+                
+                // Remove from active downloads
+                _activeDownloads.Remove(cacheKey);
+                
+                UpdateDownloadsDisplay();
+                Logger.Info($"Marked download as cancelled: {download.Title}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, $"Failed to mark download as cancelled: {cacheKey}");
+        }
     }
     
     private void AdjustDownloadsListViewColumns()
@@ -98,11 +309,11 @@ public partial class MainForm
         AdjustDownloadsListViewColumns();
     }
     
-    public void AddDownload(Song song, AudioStreamInfo streamInfo)
+    public void AddDownload(Song song, AudioStreamInfo streamInfo, CancellationTokenSource? cancellationTokenSource = null)
     {
         if (InvokeRequired)
         {
-            SafeInvoke(() => AddDownload(song, streamInfo));
+            SafeInvoke(() => AddDownload(song, streamInfo, cancellationTokenSource));
             return;
         }
         
@@ -126,6 +337,13 @@ public partial class MainForm
             };
             
             _downloads.Add(downloadInfo);
+            
+            // Track the download with its cancellation token if provided
+            if (cancellationTokenSource != null)
+            {
+                _activeDownloads[cacheKey] = cancellationTokenSource;
+            }
+            
             UpdateDownloadsDisplay();
             
             Logger.Debug($"Added download: {song.Title} with cache key: {cacheKey}");
@@ -200,6 +418,9 @@ public partial class MainForm
             {
                 download.Status = success ? "Completed" : "Failed";
                 
+                // Remove from active downloads
+                _activeDownloads.Remove(cacheKey);
+                
                 // Remove completed downloads after a delay
                 if (success)
                 {
@@ -242,6 +463,10 @@ public partial class MainForm
             {
                 download.Status = "Failed";
                 download.ErrorMessage = errorMessage;
+                
+                // Remove from active downloads
+                _activeDownloads.Remove(cacheKey);
+                
                 UpdateDownloadsDisplay();
                 
                 Logger.Warn($"Download failed: {download.Title} - {errorMessage}");
@@ -264,6 +489,11 @@ public partial class MainForm
         try
         {
             _downloads.Add(downloadInfo);
+            
+            // Create a cancellation token source for this download
+            var cancellationTokenSource = new CancellationTokenSource();
+            _activeDownloads[downloadInfo.CacheKey] = cancellationTokenSource;
+            
             UpdateDownloadsDisplay();
             Logger.Debug($"Download started: {downloadInfo.Title} by {downloadInfo.Artist} (CacheKey: {downloadInfo.CacheKey})");
             Logger.Debug($"Total downloads in list: {_downloads.Count}");
@@ -396,6 +626,9 @@ public partial class MainForm
                 {
                     download.ErrorMessage = e.ErrorMessage;
                 }
+                
+                // Remove from active downloads
+                _activeDownloads.Remove(e.CacheKey);
                 
                 // Remove completed downloads after a delay
                 if (e.Success)

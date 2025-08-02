@@ -159,10 +159,22 @@ public partial class MainForm
                     case "Open URL":
                     case "Add to Queue":
                     case "Add to Queue (Next)":
+                        menuItem.Enabled = hasSingleSelection;
+                        break;
                     case "Remove from Queue":
+                        // Allow multiple selections for queue removal
+                        menuItem.Enabled = hasSelection && listView == queueListView;
+                        // Update text based on selection count
+                        if (listView == queueListView && hasSelection)
+                        {
+                            var count = listView.SelectedItems.Count;
+                            menuItem.Text = count == 1 ? "Remove from Queue" : $"Remove {count} Songs from Queue";
+                        }
+                        break;
                     case "Move Up":
                     case "Move Down":
-                        menuItem.Enabled = hasSingleSelection;
+                        // Only allow single selection for move operations
+                        menuItem.Enabled = hasSingleSelection && listView == queueListView;
                         break;
                     case "Add Selected to Queue":
                         menuItem.Enabled = hasSelection;

@@ -321,19 +321,28 @@ public partial class MainForm
 
     private void OnContextMenuRemoveFromQueue()
     {
-        if (queueListView.SelectedItems.Count == 1)
+        if (queueListView.SelectedItems.Count > 0)
         {
-            var selectedItem = queueListView.SelectedItems[0];
-            if (selectedItem.Tag is Song song)
+            // Get selected indices in descending order to avoid index shifting issues
+            var selectedIndices = queueListView.SelectedIndices.Cast<int>().OrderByDescending(i => i).ToList();
+            
+            // Remove songs from queue
+            foreach (int index in selectedIndices)
             {
-                var index = queueListView.SelectedIndices[0];
-                _queue.RemoveSongAt(index);
-                
-                // Refresh the queue display
-                UpdateQueueDisplay();
-                
-                Logger.Info($"Removed '{song.Title}' from queue");
+                if (index >= 0 && index < _queue.Songs.Count)
+                {
+                    _queue.RemoveSong(index);
+                }
             }
+            
+            // Refresh the queue display
+            UpdateQueueDisplay();
+            
+            // Show notification
+            var count = selectedIndices.Count;
+            var message = count == 1 ? $"Removed song from queue" : $"Removed {count} songs from queue";
+            Logger.Info(message);
+            _toastNotificationService?.ShowGenericNotification("Queue Updated", message);
         }
     }
 

@@ -1,5 +1,9 @@
 using System;
 using System.Threading;
+using System.Linq;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Windows.Forms;
 using StreamingPlayerNET.Common.Models;
 using StreamingPlayerNET.Common.Utils;
 using StreamingPlayerNET.Services;
@@ -394,7 +398,7 @@ public partial class MainForm
         // Show notification
         var count = selectedIndices.Count;
         var message = count == 1 ? "Song removed from queue" : $"{count} songs removed from queue";
-        _toastNotificationService?.ShowInfo("Queue Updated", message);
+        _toastNotificationService?.ShowGenericNotification("Queue Updated", message);
     }
 
     private async Task OnPlaylistItemDoubleClick()

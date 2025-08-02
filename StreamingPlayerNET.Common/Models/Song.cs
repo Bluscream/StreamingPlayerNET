@@ -21,7 +21,6 @@ public class Song
     
     // Playback state
     public PlaybackState State { get; set; } = PlaybackState.Stopped;
-    public TimeSpan CurrentPosition { get; set; }
     public float Volume { get; set; } = 1.0f;
     
     // Performance tracking - single Stopwatch for entire song lifecycle

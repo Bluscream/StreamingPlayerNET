@@ -293,9 +293,9 @@ public class MusicPlayerService
     public void SetPosition(TimeSpan position)
     {
         _playbackService.SetPosition(position);
-        if (_currentSong != null)
+        if (_currentSong is QueueSong queueSong)
         {
-            _currentSong.CurrentPosition = position;
+            queueSong.CurrentPosition = position;
         }
     }
     

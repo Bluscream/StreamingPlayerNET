@@ -60,6 +60,11 @@ public class NAudioPlaybackService : IPlaybackService
         Logger.Debug("Caching service set for NAudio playback service");
     }
     
+    public CachingService? GetCachingService()
+    {
+        return _cachingService;
+    }
+    
     private void SetupProgressTimer()
     {
         _progressTimer = new System.Windows.Forms.Timer();

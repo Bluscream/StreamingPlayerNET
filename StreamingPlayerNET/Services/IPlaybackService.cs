@@ -27,4 +27,6 @@ public interface IPlaybackService
     bool IsPlaying { get; }
     bool IsPaused { get; }
     bool IsStopped { get; }
+    
+    CachingService? GetCachingService();
 } 

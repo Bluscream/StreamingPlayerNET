@@ -48,6 +48,13 @@ public partial class MainForm
         viewOnYouTubeMenuItem.Click += (s, e) => OnContextMenuViewOnYouTube();
         contextMenu.Items.Add(viewOnYouTubeMenuItem);
         
+        contextMenu.Items.Add(new ToolStripSeparator());
+        
+        // Show in Explorer menu item
+        var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
+        showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
+        contextMenu.Items.Add(showInExplorerMenuItem);
+        
         // Assign context menu to search list
         searchListView.ContextMenuStrip = contextMenu;
         
@@ -98,6 +105,13 @@ public partial class MainForm
         viewOnYouTubeMenuItem.Click += (s, e) => OnContextMenuViewOnYouTube();
         contextMenu.Items.Add(viewOnYouTubeMenuItem);
         
+        contextMenu.Items.Add(new ToolStripSeparator());
+        
+        // Show in Explorer menu item
+        var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
+        showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
+        contextMenu.Items.Add(showInExplorerMenuItem);
+        
         // Assign context menu to queue list
         queueListView.ContextMenuStrip = contextMenu;
         
@@ -137,6 +151,13 @@ public partial class MainForm
         var viewOnYouTubeMenuItem = new ToolStripMenuItem("Open URL");
         viewOnYouTubeMenuItem.Click += (s, e) => OnContextMenuViewOnYouTube();
         contextMenu.Items.Add(viewOnYouTubeMenuItem);
+        
+        contextMenu.Items.Add(new ToolStripSeparator());
+        
+        // Show in Explorer menu item
+        var showInExplorerMenuItem = new ToolStripMenuItem("Show in Explorer");
+        showInExplorerMenuItem.Click += (s, e) => OnContextMenuShowInExplorer();
+        contextMenu.Items.Add(showInExplorerMenuItem);
         
         // Assign context menu to playlist list
         playlistListView.ContextMenuStrip = contextMenu;
@@ -340,6 +361,69 @@ public partial class MainForm
                 }
                 
                 Logger.Info("Moved song down in queue");
+            }
+        }
+    }
+    
+    private void OnContextMenuShowInExplorer()
+    {
+        var activeListView = GetActiveListView();
+        if (activeListView?.SelectedItems.Count == 1)
+        {
+            var selectedItem = activeListView.SelectedItems[0];
+            if (selectedItem.Tag is Song song && song.SelectedStream != null)
+            {
+                try
+                {
+                    // Get the caching service from the playback service
+                    var cachingService = _playbackService?.GetCachingService();
+                    if (cachingService != null)
+                    {
+                        var filePath = cachingService.GetCachedFilePath(song, song.SelectedStream);
+                        if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+                        {
+                            // Show the file in Windows Explorer
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = "explorer.exe",
+                                Arguments = $"/select,\"{filePath}\"",
+                                UseShellExecute = true
+                            });
+                            Logger.Info($"Opened file in Explorer: {filePath}");
+                        }
+                        else
+                        {
+                            Logger.Warn($"File not found in cache for song: {song.Title}");
+                            // Show a message to the user that the file is not cached
+                            MessageBox.Show(
+                                "This song is not currently cached locally. Play the song first to cache it.",
+                                "File Not Cached",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information
+                            );
+                        }
+                    }
+                    else
+                    {
+                        Logger.Warn("Caching service not available");
+                        MessageBox.Show(
+                            "Caching service is not available.",
+                            "Service Unavailable",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Failed to show file in Explorer");
+                    MessageBox.Show(
+                        $"Failed to show file in Explorer: {ex.Message}",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    );
+                }
             }
         }
     }

@@ -164,9 +164,29 @@ public partial class MainForm
                     case "Add Selected to Queue":
                         menuItem.Enabled = hasSelection;
                         break;
+                    case "Show in Explorer":
+                        menuItem.Enabled = hasSingleSelection && IsFileCached(listView);
+                        break;
                 }
             }
         }
+    }
+    
+    private bool IsFileCached(ListView listView)
+    {
+        if (listView.SelectedItems.Count != 1) return false;
+        
+        var selectedItem = listView.SelectedItems[0];
+        if (selectedItem.Tag is Song song && song.SelectedStream != null)
+        {
+            var cachingService = _playbackService?.GetCachingService();
+            if (cachingService != null)
+            {
+                var filePath = cachingService.GetCachedFilePath(song, song.SelectedStream);
+                return !string.IsNullOrEmpty(filePath) && File.Exists(filePath);
+            }
+        }
+        return false;
     }
 
     private ListView? GetActiveListView()

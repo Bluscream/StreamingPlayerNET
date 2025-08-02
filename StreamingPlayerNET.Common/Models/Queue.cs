@@ -87,9 +87,9 @@ public class Queue : Playlist
     
     public new void AddSong(Song song)
     {
-        // Convert Song to QueueSong if it's not already a QueueSong
-        var queueSong = song is QueueSong ? (QueueSong)song : QueueSong.FromSong(song);
-        Songs.Add(queueSong);
+        // Set the AddedToQueueAt timestamp for the song
+        song.AddedToQueueAt = DateTime.Now;
+        Songs.Add(song);
         if (_shuffleEnabled)
         {
             UpdateShuffleOrder();
@@ -101,9 +101,9 @@ public class Queue : Playlist
     {
         foreach (var song in songs)
         {
-            // Convert Song to QueueSong if it's not already a QueueSong
-            var queueSong = song is QueueSong ? (QueueSong)song : QueueSong.FromSong(song);
-            Songs.Add(queueSong);
+            // Set the AddedToQueueAt timestamp for the song
+            song.AddedToQueueAt = DateTime.Now;
+            Songs.Add(song);
         }
         if (_shuffleEnabled)
         {
@@ -116,9 +116,9 @@ public class Queue : Playlist
     {
         if (index >= 0 && index <= Songs.Count)
         {
-            // Convert Song to QueueSong if it's not already a QueueSong
-            var queueSong = song is QueueSong ? (QueueSong)song : QueueSong.FromSong(song);
-            Songs.Insert(index, queueSong);
+            // Set the AddedToQueueAt timestamp for the song
+            song.AddedToQueueAt = DateTime.Now;
+            Songs.Insert(index, song);
             if (_currentIndex >= index)
             {
                 _currentIndex++;
@@ -406,28 +406,13 @@ public class Queue : Playlist
     }
     
     /// <summary>
-    /// Gets the current song as a QueueSong
-    /// </summary>
-    public QueueSong? CurrentQueueSong => CurrentSong as QueueSong;
-    
-    /// <summary>
-    /// Gets the next song as a QueueSong
-    /// </summary>
-    public QueueSong? NextQueueSong => NextSong as QueueSong;
-    
-    /// <summary>
-    /// Gets the previous song as a QueueSong
-    /// </summary>
-    public QueueSong? PreviousQueueSong => PreviousSong as QueueSong;
-    
-    /// <summary>
     /// Saves the current position of the current song
     /// </summary>
     public void SaveCurrentSongPosition()
     {
-        if (CurrentQueueSong != null)
+        if (CurrentSong != null)
         {
-            CurrentQueueSong.SaveCurrentPosition();
+            CurrentSong.SaveCurrentPosition();
         }
     }
     
@@ -436,9 +421,9 @@ public class Queue : Playlist
     /// </summary>
     public void RestoreCurrentSongPosition()
     {
-        if (CurrentQueueSong != null)
+        if (CurrentSong != null)
         {
-            CurrentQueueSong.RestorePosition();
+            CurrentSong.RestorePosition();
         }
     }
     
@@ -447,9 +432,9 @@ public class Queue : Playlist
     /// </summary>
     public void RecordCurrentSongPlaybackStart()
     {
-        if (CurrentQueueSong != null)
+        if (CurrentSong != null)
         {
-            CurrentQueueSong.RecordPlaybackStart();
+            CurrentSong.RecordPlaybackStart();
         }
     }
     
@@ -458,9 +443,9 @@ public class Queue : Playlist
     /// </summary>
     public void RecordCurrentSongPlaybackPause()
     {
-        if (CurrentQueueSong != null)
+        if (CurrentSong != null)
         {
-            CurrentQueueSong.RecordPlaybackPause();
+            CurrentSong.RecordPlaybackPause();
         }
     }
 }

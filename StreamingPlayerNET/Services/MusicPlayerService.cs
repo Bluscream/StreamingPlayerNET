@@ -86,12 +86,15 @@ public class MusicPlayerService
         {
             // Start the song timer at the very beginning
             song.StartSongTimer();
-            song.State = PlaybackState.Loading;
+            if (song is QueueSong queueSongForState)
+            {
+                queueSongForState.State = PlaybackState.Loading;
+            }
             
             // If it's a QueueSong, record playback start
-            if (song is QueueSong queueSong)
+            if (song is QueueSong queueSongForRecord)
             {
-                queueSong.RecordPlaybackStart();
+                queueSongForRecord.RecordPlaybackStart();
             }
             
             // Step 1: Get metadata if not already available
@@ -143,7 +146,10 @@ public class MusicPlayerService
             Logger.Info($"Audio playback setup completed in {playbackSetupDuration?.TotalMilliseconds.Milliseconds()}");
             
             _currentSong = song;
-            song.State = PlaybackState.Playing;
+            if (song is QueueSong queueSongForPlaying)
+            {
+                queueSongForPlaying.State = PlaybackState.Playing;
+            }
             _wasManuallyStopped = false; // Clear manual stop flag when starting new playback
             
             Logger.Info($"*** FIRING SongChanged event for: {song.Title} by {song.Artist} on thread {System.Threading.Thread.CurrentThread.ManagedThreadId}");
@@ -156,7 +162,10 @@ public class MusicPlayerService
         }
         catch (Exception ex)
         {
-            song.State = PlaybackState.Stopped;
+            if (song is QueueSong queueSongForError)
+            {
+                queueSongForError.State = PlaybackState.Stopped;
+            }
             song.StopSongTimer();
             var failedTime = song.GetCurrentSongTime();
             Logger.Error(ex, $"Failed to play song: {song.Title} after {failedTime?.TotalMilliseconds.Milliseconds()}");
@@ -231,14 +240,17 @@ public class MusicPlayerService
         _playbackService.Pause();
         if (_currentSong != null)
         {
-            _currentSong.State = PlaybackState.Paused;
+            if (_currentSong is QueueSong queueSongForPause)
+            {
+                queueSongForPause.State = PlaybackState.Paused;
+            }
             var pauseTime = _currentSong.GetCurrentSongTime();
             Logger.Info($"Song paused at {pauseTime?.TotalMilliseconds.Milliseconds()} into the process");
             
             // If it's a QueueSong, save the current position
-            if (_currentSong is QueueSong queueSong)
+            if (_currentSong is QueueSong queueSongForRecord)
             {
-                queueSong.RecordPlaybackPause();
+                queueSongForRecord.RecordPlaybackPause();
             }
         }
     }
@@ -249,14 +261,17 @@ public class MusicPlayerService
         _playbackService.Resume();
         if (_currentSong != null)
         {
-            _currentSong.State = PlaybackState.Playing;
+            if (_currentSong is QueueSong queueSongForResume)
+            {
+                queueSongForResume.State = PlaybackState.Playing;
+            }
             var resumeTime = _currentSong.GetCurrentSongTime();
             Logger.Info($"Song resumed at {resumeTime?.TotalMilliseconds.Milliseconds()} into the process");
             
             // If it's a QueueSong, record playback start
-            if (_currentSong is QueueSong queueSong)
+            if (_currentSong is QueueSong queueSongForRecord)
             {
-                queueSong.RecordPlaybackStart();
+                queueSongForRecord.RecordPlaybackStart();
             }
         }
     }
@@ -268,15 +283,18 @@ public class MusicPlayerService
         _playbackService.Stop();
         if (_currentSong != null)
         {
-            _currentSong.State = PlaybackState.Stopped;
+            if (_currentSong is QueueSong queueSongForStop)
+            {
+                queueSongForStop.State = PlaybackState.Stopped;
+            }
             _currentSong.StopSongTimer();
             var stopTime = _currentSong.GetCurrentSongTime();
             Logger.Info($"Song stopped after {stopTime?.TotalMilliseconds.Milliseconds()} - process terminated early");
             
             // If it's a QueueSong, save the current position for later resumption
-            if (_currentSong is QueueSong queueSong)
+            if (_currentSong is QueueSong queueSongForSave)
             {
-                queueSong.SaveCurrentPosition();
+                queueSongForSave.SaveCurrentPosition();
             }
         }
     }

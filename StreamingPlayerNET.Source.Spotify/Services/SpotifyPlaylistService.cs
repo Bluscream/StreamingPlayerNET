@@ -255,8 +255,7 @@ public class SpotifyPlaylistService : IPlaylistService
                             ThumbnailUrl = track.Album?.Images?.FirstOrDefault()?.Url,
                             Url = track.ExternalUrls?.FirstOrDefault().Value,
                             PlaylistName = playlist.Name ?? "Unknown Playlist",
-                            Source = "Spotify",
-                            State = PlaybackState.Stopped
+                            Source = "Spotify"
                         };
                         songs.Add(song);
                     }

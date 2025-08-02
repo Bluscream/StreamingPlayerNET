@@ -20,7 +20,6 @@ public class Song
     public string? Source { get; set; }
     
     // Playback state
-    public PlaybackState State { get; set; } = PlaybackState.Stopped;
     public float Volume { get; set; } = 1.0f;
     
     // Performance tracking - single Stopwatch for entire song lifecycle

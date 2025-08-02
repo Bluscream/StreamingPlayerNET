@@ -180,8 +180,7 @@ public class SpotifySearchService : ISearchService
             Duration = track.DurationMs > 0 ? TimeSpan.FromMilliseconds(track.DurationMs) : null,
             ThumbnailUrl = track.Album?.Images?.FirstOrDefault()?.Url,
             Url = track.ExternalUrls?.FirstOrDefault().Value,
-            Source = "Spotify",
-            State = PlaybackState.Stopped
+            Source = "Spotify"
         };
     }
 } 

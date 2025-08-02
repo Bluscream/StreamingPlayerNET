@@ -41,8 +41,7 @@ public class SpotifyMetadataService : IMetadataService
                 ThumbnailUrl = track.Album?.Images?.FirstOrDefault()?.Url,
                 Url = track.ExternalUrls?.FirstOrDefault().Value,
                 Description = $"Track from {track.Album?.Name} by {string.Join(", ", track.Artists?.Select(a => a.Name) ?? Array.Empty<string>())}",
-                Source = "Spotify",
-                State = PlaybackState.Stopped
+                Source = "Spotify"
             };
 
             Logger.Debug($"Retrieved metadata for track: {song.Title} - {song.Artist}");

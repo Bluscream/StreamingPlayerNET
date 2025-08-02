@@ -18,6 +18,11 @@ public class QueueSong : Song
     public TimeSpan CurrentPosition { get; set; }
     
     /// <summary>
+    /// The current playback state (for QueueSong instances)
+    /// </summary>
+    public PlaybackState State { get; set; } = PlaybackState.Stopped;
+    
+    /// <summary>
     /// Whether the song was playing when it was paused/stopped
     /// </summary>
     public bool WasPlaying { get; set; }
@@ -133,7 +138,6 @@ public class QueueSong : Song
             ViewCount = song.ViewCount,
             LikeCount = song.LikeCount,
             Source = song.Source,
-            State = song.State,
             Volume = song.Volume,
             SelectedStream = song.SelectedStream
         };

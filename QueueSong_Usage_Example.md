@@ -133,6 +133,7 @@ if (queueCache != null)
 ## Properties
 
 - `CurrentPosition`: The current playback position (QueueSong-specific)
+- `State`: The current playback state (QueueSong-specific)
 - `SavedPosition`: The position where playback was last stopped
 - `WasPlaying`: Whether the song was playing when paused/stopped
 - `AddedToQueueAt`: Timestamp when added to queue

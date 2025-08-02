@@ -20,28 +20,32 @@ public partial class MainForm
         {
             Logger.Info($"[Play-{playId}] Loading: {song.Title}...");
             
-            // Add song to queue if not already there
-            if (!_queue.Songs.Contains(song))
+            // Ensure queue operations happen on UI thread
+            SafeInvoke(() =>
             {
-                Logger.Debug($"[Play-{playId}] Adding song to queue: {song.Title}");
-                _queue.AddSong(song);
-            }
-            else
-            {
-                Logger.Debug($"[Play-{playId}] Song already in queue: {song.Title}");
-            }
-            
-            // Set current index to this song
-            var songIndex = _queue.Songs.IndexOf(song);
-            Logger.Debug($"[Play-{playId}] Song index in queue: {songIndex}, Current queue index: {_queue.CurrentIndex}");
-            if (songIndex >= 0)
-            {
-                Logger.Debug($"[Play-{playId}] Moving queue to index {songIndex}");
-                _queue.MoveToIndex(songIndex);
-            }
-            
-            // Start progress timer for loading state
-            _progressTimer?.Start();
+                // Add song to queue if not already there
+                if (!_queue.Songs.Contains(song))
+                {
+                    Logger.Debug($"[Play-{playId}] Adding song to queue: {song.Title}");
+                    _queue.AddSong(song);
+                }
+                else
+                {
+                    Logger.Debug($"[Play-{playId}] Song already in queue: {song.Title}");
+                }
+                
+                // Set current index to this song
+                var songIndex = _queue.Songs.IndexOf(song);
+                Logger.Debug($"[Play-{playId}] Song index in queue: {songIndex}, Current queue index: {_queue.CurrentIndex}");
+                if (songIndex >= 0)
+                {
+                    Logger.Debug($"[Play-{playId}] Moving queue to index {songIndex}");
+                    _queue.MoveToIndex(songIndex);
+                }
+                
+                // Start progress timer for loading state
+                _progressTimer?.Start();
+            });
             
             Logger.Info($"[Play-{playId}] Calling MusicPlayerService.PlaySongAsync for: {song.Title}");
             await _musicPlayerService.PlaySongAsync(song);
@@ -51,9 +55,8 @@ public partial class MainForm
         catch (Exception ex)
         {
             Logger.Error(ex, $"[Play-{playId}] *** FAILED TO PLAY SONG: {song.Title}");
-            MessageBox.Show($"Failed to play song: {ex.Message}\n\nTry selecting a different song.", "Playback Error", 
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            
+            SafeInvoke(() => MessageBox.Show($"Failed to play song: {ex.Message}\n\nTry selecting a different song.", "Playback Error", 
+                MessageBoxButtons.OK, MessageBoxIcon.Warning));
         }
     }
 

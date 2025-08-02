@@ -109,20 +109,7 @@ public partial class MainForm
         }
     }
 
-    private void SetupSearchContextMenu()
-    {
-        SetupSongContextMenu(SongContextMenuType.Search);
-    }
 
-    private void SetupQueueContextMenu()
-    {
-        SetupSongContextMenu(SongContextMenuType.Queue);
-    }
-
-    private void SetupPlaylistContextMenu()
-    {
-        SetupSongContextMenu(SongContextMenuType.Playlist);
-    }
 
     private void UpdateSearchContextMenuItems(ContextMenuStrip contextMenu)
     {

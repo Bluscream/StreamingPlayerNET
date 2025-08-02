@@ -40,16 +40,16 @@ public partial class MainForm
         
         // Search tab events
         searchListView.DoubleClick += async (s, e) => await OnSearchResultDoubleClick();
-        SetupSearchContextMenu();
+        SetupSongContextMenu(SongContextMenuType.Search);
         
         // Queue tab events
         queueListView.DoubleClick += async (s, e) => await OnQueueItemDoubleClick();
-        SetupQueueContextMenu();
+        SetupSongContextMenu(SongContextMenuType.Queue);
         
         // Playlist tab events
         playlistsListBox.DoubleClick += (s, e) => OnPlaylistDoubleClick();
         playlistListView.DoubleClick += async (s, e) => await OnPlaylistItemDoubleClick();
-        SetupPlaylistContextMenu();
+        SetupSongContextMenu(SongContextMenuType.Playlist);
         
 
         

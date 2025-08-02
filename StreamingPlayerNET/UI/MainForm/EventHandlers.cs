@@ -78,6 +78,9 @@ public partial class MainForm
     {
         // Subscribe to queue changes to update the display
         _queue.OnSongsChanged += () => SafeInvoke(UpdateQueueDisplay);
+        
+        // Setup downloads tab
+        SetupDownloadsTab();
     }
 
     private void SetupProgressTimer()

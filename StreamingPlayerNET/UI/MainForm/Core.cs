@@ -99,6 +99,15 @@ public partial class MainForm
             _musicPlayerService.PositionChanged += OnPositionChanged;
             _musicPlayerService.PlaybackCompleted += OnPlaybackCompleted;
             
+            // Wire up caching service events for downloads tracking
+            var cachingService = _playbackService?.GetCachingService();
+            if (cachingService != null)
+            {
+                cachingService.DownloadStarted += OnDownloadStarted;
+                cachingService.DownloadProgressChanged += OnCachingServiceDownloadProgressChanged;
+                cachingService.DownloadCompleted += OnDownloadCompleted;
+            }
+            
             // Wire up queue events
             _queue.OnRepeatModeChanged += OnQueueRepeatModeChanged;
             _queue.OnShuffleChanged += OnQueueShuffleChanged;

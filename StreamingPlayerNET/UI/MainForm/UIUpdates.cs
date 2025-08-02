@@ -196,6 +196,7 @@ public partial class MainForm
             var tab when tab == searchTabPage => searchListView,
             var tab when tab == queueTabPage => queueListView,
             var tab when tab == playlistTabPage => playlistListView,
+            var tab when tab == downloadsTabPage => downloadsListView,
             _ => null
         };
     }

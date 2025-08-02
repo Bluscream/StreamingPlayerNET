@@ -29,7 +29,9 @@ public partial class MainForm : Form
     private List<Song> _searchResults = new();
     private List<Playlist> _playlists = new();
     private Queue _queue = new();
+    private List<DownloadInfo> _downloads = new();
     private System.Windows.Forms.Timer? _progressTimer;
+    private System.Windows.Forms.Timer? _downloadsUpdateTimer;
     
     // Data binding properties for the different views
     // Note: Using manual ListView population instead of data binding for better control

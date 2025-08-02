@@ -47,9 +47,10 @@ partial class MainForm
     private ToolStripMenuItem helpMenuItem;
     private ToolStripMenuItem settingsMenu;
     private TabControl mainTabControl;
-    private TabPage searchTabPage;
-    private TabPage queueTabPage;
-    private TabPage playlistTabPage;
+            private TabPage searchTabPage;
+        private TabPage queueTabPage;
+        private TabPage playlistTabPage;
+        private TabPage downloadsTabPage;
 
     private TextBox searchTextBox;
     private Button searchButton;
@@ -63,7 +64,13 @@ partial class MainForm
     private ColumnHeader queueArtistColumn;
     private ColumnHeader queueDurationColumn;
     private ColumnHeader queueSourceColumn;
-    private ListView playlistListView;
+            private ListView playlistListView;
+        private ListView downloadsListView;
+        private ColumnHeader downloadTitleColumn;
+        private ColumnHeader downloadArtistColumn;
+        private ColumnHeader downloadStatusColumn;
+        private ColumnHeader downloadProgressColumn;
+        private ColumnHeader downloadTimeColumn;
     private ColumnHeader playlistTitleColumn;
     private ColumnHeader playlistArtistColumn;
     private ColumnHeader playlistDurationColumn;
@@ -151,6 +158,13 @@ partial class MainForm
         playlistArtistColumn = new ColumnHeader();
         playlistDurationColumn = new ColumnHeader();
         playlistSourceColumn = new ColumnHeader();
+        downloadsTabPage = new TabPage();
+        downloadsListView = new ListView();
+        downloadTitleColumn = new ColumnHeader();
+        downloadArtistColumn = new ColumnHeader();
+        downloadStatusColumn = new ColumnHeader();
+        downloadProgressColumn = new ColumnHeader();
+        downloadTimeColumn = new ColumnHeader();
         playerPanel = new Panel();
         playerSplitContainer = new SplitContainer();
         currentSongLabel = new Label();
@@ -177,6 +191,7 @@ partial class MainForm
         searchControlsPanel.SuspendLayout();
         queueTabPage.SuspendLayout();
         playlistTabPage.SuspendLayout();
+        downloadsTabPage.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)playlistSplitContainer).BeginInit();
         playlistSplitContainer.Panel1.SuspendLayout();
         playlistSplitContainer.Panel2.SuspendLayout();
@@ -360,6 +375,7 @@ partial class MainForm
         mainTabControl.Controls.Add(searchTabPage);
         mainTabControl.Controls.Add(queueTabPage);
         mainTabControl.Controls.Add(playlistTabPage);
+        mainTabControl.Controls.Add(downloadsTabPage);
         mainTabControl.Dock = DockStyle.Fill;
         mainTabControl.Location = new Point(0, 24);
         mainTabControl.Name = "mainTabControl";
@@ -558,6 +574,55 @@ partial class MainForm
         // 
         playlistSourceColumn.Text = "Source";
         playlistSourceColumn.Width = 100;
+        // 
+        // downloadsTabPage
+        // 
+        downloadsTabPage.Controls.Add(downloadsListView);
+        downloadsTabPage.Location = new Point(4, 24);
+        downloadsTabPage.Name = "downloadsTabPage";
+        downloadsTabPage.Padding = new Padding(3);
+        downloadsTabPage.Size = new Size(992, 438);
+        downloadsTabPage.TabIndex = 3;
+        downloadsTabPage.Text = "⬇️ Downloads";
+        downloadsTabPage.UseVisualStyleBackColor = true;
+        // 
+        // downloadsListView
+        // 
+        downloadsListView.Columns.AddRange(new ColumnHeader[] { downloadTitleColumn, downloadArtistColumn, downloadStatusColumn, downloadProgressColumn, downloadTimeColumn });
+        downloadsListView.Dock = DockStyle.Fill;
+        downloadsListView.FullRowSelect = true;
+        downloadsListView.GridLines = true;
+        downloadsListView.Location = new Point(3, 3);
+        downloadsListView.Name = "downloadsListView";
+        downloadsListView.Size = new Size(986, 432);
+        downloadsListView.TabIndex = 0;
+        downloadsListView.UseCompatibleStateImageBehavior = false;
+        downloadsListView.View = View.Details;
+        // 
+        // downloadTitleColumn
+        // 
+        downloadTitleColumn.Text = "Title";
+        downloadTitleColumn.Width = 250;
+        // 
+        // downloadArtistColumn
+        // 
+        downloadArtistColumn.Text = "Artist";
+        downloadArtistColumn.Width = 150;
+        // 
+        // downloadStatusColumn
+        // 
+        downloadStatusColumn.Text = "Status";
+        downloadStatusColumn.Width = 100;
+        // 
+        // downloadProgressColumn
+        // 
+        downloadProgressColumn.Text = "Progress";
+        downloadProgressColumn.Width = 200;
+        // 
+        // downloadTimeColumn
+        // 
+        downloadTimeColumn.Text = "Time";
+        downloadTimeColumn.Width = 100;
         // 
         // playerPanel
         // 
@@ -785,6 +850,7 @@ partial class MainForm
         searchControlsPanel.PerformLayout();
         queueTabPage.ResumeLayout(false);
         playlistTabPage.ResumeLayout(false);
+        downloadsTabPage.ResumeLayout(false);
         playlistSplitContainer.Panel1.ResumeLayout(false);
         playlistSplitContainer.Panel2.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)playlistSplitContainer).EndInit();
